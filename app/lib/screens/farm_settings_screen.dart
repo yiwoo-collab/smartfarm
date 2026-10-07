@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
@@ -89,7 +91,9 @@ class FarmListScreen extends StatelessWidget {
         ],
       ),
     );
-    if (host != null && host.isNotEmpty) await store.addMockFarms(host);
+    // "http://192.168.0.4:8080/" 처럼 넣어도 호스트만 쓴다
+    final h = host == null ? '' : Farm.normalizeAddress(host).split(':').first;
+    if (h.isNotEmpty) await store.addMockFarms(h);
   }
 
   void _openEditor(BuildContext context, Farm? farm) {
@@ -99,6 +103,24 @@ class FarmListScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 연결 실패 원인을 사람이 알아볼 수 있게 설명한다
+String connectionFailureHint(Object e) {
+  final text = e.toString().toLowerCase();
+  if (e is TimeoutException || text.contains('timeout')) {
+    return '응답이 없습니다. ① 폰과 PC가 같은 와이파이인지(모바일 데이터 끄기) '
+        '② PC에서 RMU(시작하기.bat)가 켜져 있는지 ③ PC 방화벽이 막지 않는지 확인하세요';
+  }
+  if (text.contains('refused')) {
+    return 'PC에는 닿았지만 RMU 서버가 꺼져 있거나 포트가 다릅니다. '
+        '시작하기.bat이 켜져 있는지, 포트(8080/8081)를 확인하세요';
+  }
+  if (text.contains('unreachable') || text.contains('no route')) {
+    return '네트워크에서 그 주소를 찾을 수 없습니다. 폰이 PC와 같은 와이파이인지 확인하세요';
+  }
+  if (e is ApiException) return 'RMU가 오류로 응답했습니다: ${e.message}';
+  return '주소를 확인하세요 ($e)';
 }
 
 /// 농장 추가 / 수정 화면. farm이 null이면 새 농장.
@@ -135,7 +157,7 @@ class _FarmEditScreenState extends State<FarmEditScreen> {
     final values = (
       name: _name.text.trim(),
       crop: _crop.text.trim(),
-      address: _address.text.trim(),
+      address: Farm.normalizeAddress(_address.text),
       community: _community.text.trim(),
     );
     final old = widget.farm;
@@ -159,9 +181,10 @@ class _FarmEditScreenState extends State<FarmEditScreen> {
   /// 입력한 주소로 /api/status 를 한 번 불러 본다
   Future<void> _testConnection() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _testResult = '연결 확인 중...');
+    final url = _buildFarm().baseUrl;
+    setState(() => _testResult = '$url 에 연결 확인 중...');
     try {
-      final status = await RmuApi(_buildFarm().baseUrl).fetchStatus();
+      final status = await RmuApi(url).fetchStatus();
       if (!mounted) return;
       setState(
         () => _testResult =
@@ -169,7 +192,7 @@ class _FarmEditScreenState extends State<FarmEditScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _testResult = '연결 실패: 주소를 확인하세요');
+      setState(() => _testResult = '연결 실패 ($url)\n${connectionFailureHint(e)}');
     }
   }
 
@@ -210,9 +233,9 @@ class _FarmEditScreenState extends State<FarmEditScreen> {
   String? _required(String? v) =>
       (v == null || v.trim().isEmpty) ? '입력해 주세요' : null;
 
-  /// "IP:포트" 또는 "호스트:포트" 형식인지 확인
+  /// "IP:포트" 또는 "호스트:포트" 형식인지 확인 (포트를 빼면 8080)
   String? _validateAddress(String? v) {
-    final value = v?.trim() ?? '';
+    final value = Farm.normalizeAddress(v ?? '');
     if (value.isEmpty) return '입력해 주세요';
     final parts = value.split(':');
     if (parts.length != 2 || parts[0].isEmpty) return '예: 192.168.0.10:8080';
@@ -256,7 +279,7 @@ class _FarmEditScreenState extends State<FarmEditScreen> {
             TextFormField(
               controller: _address,
               decoration: const InputDecoration(
-                labelText: 'RMU 주소 (IP:포트)',
+                labelText: 'RMU 주소 (IP:포트, 포트를 빼면 8080)',
                 hintText: '192.168.0.10:8080',
               ),
               validator: _validateAddress,

@@ -130,6 +130,16 @@ void main() {
     expect(s.conditions.single.key, 'temp');
   });
 
+  test('RMU 주소 정리: 포트가 없으면 8080, http:// 와 경로는 뺀다', () {
+    expect(Farm.normalizeAddress('192.168.0.4'), '192.168.0.4:8080');
+    expect(Farm.normalizeAddress(' 192.168.0.4:8081 '), '192.168.0.4:8081');
+    expect(
+      Farm.normalizeAddress('http://192.168.0.4:8080/api/status'),
+      '192.168.0.4:8080',
+    );
+    expect(Farm.normalizeAddress(''), '');
+  });
+
   testWidgets('시나리오 19: 농장이 없으면 연결 안내', (tester) async {
     await pumpApp(tester);
     expect(find.textContaining('연동된 농장이 없습니다'), findsOneWidget);

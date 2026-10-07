@@ -18,7 +18,7 @@ class ApiException implements Exception {
 /// RMU REST API 호출 (CLAUDE.md 6장).
 /// 관리자 작업(제어·임계값·설정)은 로그인으로 받은 토큰이 필요하다.
 class RmuApi {
-  static const _timeout = Duration(seconds: 3);
+  static const _timeout = Duration(seconds: 5); // 폰 와이파이는 PC보다 느릴 수 있다
 
   final String baseUrl;
   String? token; // 로그인하면 채워진다

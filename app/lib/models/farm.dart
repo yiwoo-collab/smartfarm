@@ -18,6 +18,16 @@ class Farm {
   /// REST API 기본 주소
   String get baseUrl => 'http://$rmuAddress';
 
+  /// 입력한 주소를 "호스트:포트"로 정리한다.
+  /// 예) " http://192.168.0.4/ " → "192.168.0.4:8080" (포트를 빼면 RMU 기본 포트 8080)
+  static String normalizeAddress(String input) {
+    var a = input.trim();
+    a = a.replaceFirst(RegExp(r'^https?://', caseSensitive: false), '');
+    a = a.replaceFirst(RegExp(r'/.*$'), ''); // 뒤에 붙은 경로 제거
+    if (a.isNotEmpty && !a.contains(':')) a = '$a:8080';
+    return a;
+  }
+
   Farm copyWith({
     String? name,
     String? crop,
