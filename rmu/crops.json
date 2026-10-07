@@ -1,0 +1,10 @@
+{
+  "_comment": "작물별 임계값 기본값 (제안). 앱의 설정 > RMU 관리 > 임계값 > 작물 기본값에서 불러온다. 값을 바꾸면 test_scenarios.py가 고온·저온 복구가 되는지 확인한다.",
+  "crops": {
+    "방울토마토": { "temp_low": 15, "temp_high": 30, "humidity_low": 60, "humidity_high": 85, "soil_low": 40, "cooling_setpoint": 22, "heating_setpoint": 25 },
+    "상추":       { "temp_low": 12, "temp_high": 28, "humidity_low": 60, "humidity_high": 80, "soil_low": 45, "cooling_setpoint": 20, "heating_setpoint": 21 },
+    "딸기":       { "temp_low": 10, "temp_high": 28, "humidity_low": 60, "humidity_high": 80, "soil_low": 40, "cooling_setpoint": 19, "heating_setpoint": 20 },
+    "파프리카":   { "temp_low": 18, "temp_high": 30, "humidity_low": 65, "humidity_high": 85, "soil_low": 40, "cooling_setpoint": 22, "heating_setpoint": 27 },
+    "오이":       { "temp_low": 18, "temp_high": 32, "humidity_low": 70, "humidity_high": 90, "soil_low": 45, "cooling_setpoint": 24, "heating_setpoint": 27 }
+  }
+}

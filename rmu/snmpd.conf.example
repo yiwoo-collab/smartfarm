@@ -1,0 +1,17 @@
+# /etc/snmp/snmpd.conf 예시 (라즈베리파이, net-snmp)
+# 적용: sudo cp snmpd.conf.example /etc/snmp/snmpd.conf && sudo systemctl restart snmpd
+
+# 모든 네트워크 주소에서 SNMP 요청을 받는다 (기본값은 localhost만)
+agentAddress udp:161
+
+# 읽기 커뮤니티: 앱 농장 프로필의 "SNMP 커뮤니티"와 같은 값 (제안)
+rocommunity public default
+
+# 쓰기(Set) 커뮤니티: NMS가 있는 네트워크만 허용 (제안. 실제 대역으로 바꾸세요)
+rwcommunity private 192.168.0.0/24
+
+# 스마트팜 OID(oids.json의 base) 아래 요청을 snmp_agent.py로 넘긴다
+pass_persist .1.3.6.1.4.1.99999.1 /opt/smartfarm/venv/bin/python /opt/smartfarm/rmu/snmp_agent.py
+
+sysLocation    Smartfarm greenhouse
+sysContact     Smartfarm RMU Capstone Team

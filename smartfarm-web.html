@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스마트팜 RMU 웹 콘솔</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F4EE;--card:#fff;--ink:#17231C;--sub:#5D6E63;--line:#D9E1D2;--side:#17352A;--sideink:#CFE3D6;--g:#1F6B45;--gs:#DDEBD3;--w:#A87400;--ws:#FBEFC8;--r:#C8341F;--rs:#FBDCD5;--off:#7C8880;--os:#E4E8E2;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111813;--card:#1A241E;--ink:#E4ECE6;--sub:#9DB0A3;--line:#2B3A31;--side:#0C1410;--g:#5FCB8C;--gs:#22392B;--w:#E8B931;--ws:#3A3216;--r:#FF7B66;--rs:#43221D;--off:#7E8C83;--os:#26312A}}
+:root[data-theme="dark"]{--bg:#111813;--card:#1A241E;--ink:#E4ECE6;--sub:#9DB0A3;--line:#2B3A31;--side:#0C1410;--g:#5FCB8C;--gs:#22392B;--w:#E8B931;--ws:#3A3216;--r:#FF7B66;--rs:#43221D;--off:#7E8C83;--os:#26312A}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:400 14px/1.5 "Noto Sans KR",system-ui,sans-serif}
+#root{display:flex;height:100%}
+aside{width:210px;background:var(--side);color:var(--sideink);display:flex;flex-direction:column;flex:none;overflow-y:auto}
+aside h1{font-size:16px;padding:18px 16px 4px;color:#fff}aside .s{padding:0 16px 14px;font-size:12px;opacity:.7}
+aside button{background:none;border:0;color:inherit;text-align:left;padding:11px 16px;font:inherit;cursor:pointer;border-left:4px solid transparent}
+aside button.on{background:rgba(255,255,255,.1);border-left-color:#7EDC9F;color:#fff;font-weight:700}
+aside button:hover{background:rgba(255,255,255,.06)}
+#col{flex:1;display:flex;flex-direction:column;min-width:0}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}
+main{flex:1;overflow:auto;padding:24px}
+h2{font-size:20px;margin-bottom:14px}h3{font-size:15px;margin-bottom:8px}
+.sub{color:var(--sub);font-size:13px}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.ok{background:var(--gs);color:var(--g)}.warn{background:var(--ws);color:var(--w)}.bad{background:var(--rs);color:var(--r)}.off{background:var(--os);color:var(--off)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.sc{border:2px solid var(--line);margin:0}.sc.warn{border-color:var(--w)}.sc.bad{border-color:var(--r)}
+.v{font-size:32px;font-weight:700;line-height:1.2}.u{font-size:14px;color:var(--sub);font-weight:400}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--sub);font-weight:500}
+.wrap{overflow-x:auto}
+input,select{padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;width:100%}
+label{font-size:12px;color:var(--sub);display:block;margin:10px 0 3px}
+.btn{background:var(--g);color:var(--bg);border:0;border-radius:8px;padding:9px 16px;font:700 14px inherit;font-family:inherit;cursor:pointer}
+.btn.gh{background:none;color:var(--g);border:2px solid var(--g)}
+.btn.dn{background:var(--r);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--g);outline-offset:2px}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tabs button{padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.tabs button.on{background:var(--g);color:var(--bg);border-color:var(--g)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tog{width:48px;height:26px;border-radius:99px;border:0;background:var(--off);position:relative;cursor:pointer;flex:none}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.tog[aria-checked=true]{background:var(--g)}.tog[aria-checked=true]::after{left:25px}.tog:disabled{opacity:.5;cursor:not-allowed}
+svg{width:100%;height:auto;display:block}
+code{background:var(--os);padding:1px 6px;border-radius:5px;font-size:12px}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:9}
+.login{max-width:340px;margin:12vh auto}
+@media (max-width:760px){#root{flex-direction:column}aside{width:100%;flex-direction:row;overflow-x:auto;overflow-y:hidden}aside h1,aside .s{display:none}aside button{white-space:nowrap;border-left:0;border-bottom:4px solid transparent}aside button.on{border-bottom-color:#7EDC9F}.cols{grid-template-columns:1fr}main{padding:14px}}
+</style></head><body>
+<div id="root"></div>
+<script>
+const S={temp:{n:'온도',u:'℃',v:24.5,lo:15,hi:30,d:1,min:5,max:45},hum:{n:'습도',u:'%',v:65,lo:50,hi:85,d:0,min:20,max:100},soil:{n:'토양수분',u:'%',v:48,lo:35,hi:80,d:0,min:5,max:100},lux:{n:'조도',u:'lux',v:18000,lo:8000,hi:60000,d:0,min:0,max:70000}};
+const K=Object.keys(S),H={};K.forEach(k=>H[k]=Array.from({length:60},()=>S[k].v+(Math.random()-.5)*(S[k].max-S[k].min)*.03));
+const dev={fan:{n:'환기팬',on:false,oid:'.1.3.1'},pump:{n:'워터펌프',on:false,oid:'.1.3.2'},light:{n:'보조 조명',on:false,oid:'.1.3.3'}};
+let auto=true,ev=[],al={},page='login',sel='temp',range='1시간',fails=0,user=null,fl='전체',start=Date.now(),
+ snmp={ver:'v2c',rd:'public',wr:'private',ip:'192.168.0.10',port:162,mode:'Trap'},net={ip:'192.168.0.50',mask:'255.255.255.0',gw:'192.168.0.1',dns:'8.8.8.8'};
+const $=s=>document.querySelector(s);
+const f=(k,v)=>k==='lux'?Math.round(v).toLocaleString():v.toFixed(S[k].d);
+function st(k){const s=S[k];if(s.v>s.hi||s.v<s.lo)return'bad';const m=(s.hi-s.lo)*.1;return(s.v>s.hi-m||s.v<s.lo+m)?'warn':'ok'}
+const L={ok:'정상',warn:'주의',bad:'경보'};
+const nm={temp:'highTempAlarm',hum:'humidityAlarm',soil:'dryAlarm',lux:'lowLightAlarm'};
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2400)}
+const T=()=>new Date().toLocaleString('ko-KR',{hour12:false});
+function log(g,k,msg,trap){ev.unshift({t:T(),k,g,msg,trap,v:k?f(k,S[k].v)+S[k].u:'-'})}
+function tick(){K.forEach(k=>{const s=S[k];let d=(Math.random()-.5)*(s.max-s.min)*.012;
+ if(auto){if(k==='temp'&&dev.fan.on)d-=.5;if(k==='soil'&&dev.pump.on)d+=1.6;if(k==='lux'&&dev.light.on)d+=500}
+ if(k==='soil'&&!dev.pump.on)d-=.05;s.v=Math.min(s.max,Math.max(s.min,s.v+d));H[k].push(s.v);H[k].shift();
+ const b=st(k)==='bad';
+ if(b&&!al[k]){al[k]=1;log('경보',k,`${s.n} ${f(k,s.v)}${s.u} 기준 이탈`,nm[k]);if(auto){if(k==='temp'&&s.v>s.hi)dev.fan.on=true;if(k==='soil')dev.pump.on=true;if(k==='lux')dev.light.on=true}}
+ if(!b&&al[k]){al[k]=0;log('복구',k,`${s.n} 정상 복귀`,'alarmClear');if(k==='temp')dev.fan.on=false;if(k==='soil')dev.pump.on=false;if(k==='lux')dev.light.on=false}});
+ if(user&&['dash','sensor','sys'].includes(page)||(user&&page==='event'))draw(true)}
+setInterval(tick,2000);
+const P=[['dash','대시보드'],['sensor','센서 상세'],['event','이벤트 로그'],['thr','임계값 설정'],['ctl','제어'],['snmp','SNMP 설정'],['sys','네트워크·시스템']];
+function draw(soft){
+ const r=$('#root');
+ if(!user){r.innerHTML=`<div class="login card" style="width:100%;height:fit-content"><h2>스마트팜 RMU 로그인</h2><p class="sub">시연 계정: 관리자 admin / 1234, 일반 user / 1234</p>
+ <label for="id">아이디</label><input id="id" value="admin"><label for="pw">비밀번호</label><input id="pw" type="password" value="1234" onkeydown="if(event.key==='Enter')login()">
+ <p id="lm" class="sub" style="margin:10px 0;color:var(--r)"></p><button class="btn" style="width:100%" onclick="login()">로그인</button></div>`;return}
+ if(soft&&document.activeElement&&['INPUT','SELECT'].includes(document.activeElement.tagName))return;
+ const c=$('#col');const sy=c?$('main').scrollTop:0;
+ const bad=K.filter(k=>st(k)==='bad').length;
+ r.innerHTML=`<aside><h1>스마트팜 RMU</h1><div class="s">방울토마토 1동 · ${net.ip}</div>${P.map(([i,l])=>`<button class="${page===i?'on':''}" onclick="page='${i}';draw()">${l}</button>`).join('')}</aside>
+ <div id="col"><header><span><b>${P.find(p=>p[0]===page)[1]}</b> <span class="pill ${bad?'bad':'ok'}">${bad?'경보 '+bad+'건':'정상'}</span></span><span class="sub">${user.id} (${user.role}) · ${T()} <button class="btn gh" style="padding:4px 10px;margin-left:8px" onclick="user=null;draw()">로그아웃</button></span></header><main>${V[page]()}</main></div>`;
+ $('main').scrollTop=sy}
+function login(){if(fails>=3)return;const id=$('#id').value,pw=$('#pw').value;
+ if((id==='admin'||id==='user')&&pw==='1234'){user={id,role:id==='admin'?'관리자':'일반'};fails=0;page='dash';draw()}
+ else{fails++;$('#lm').textContent=fails>=3?'로그인 3회 실패로 잠겼어요. 새로고침 후 다시 시도하세요.':`아이디 또는 비밀번호가 틀렸어요 (${fails}/3)`}}
+function chart(k){const a=H[k],s=S[k],n=range==='1시간'?60:range==='1일'?40:20,d=a.slice(-n),lo=Math.min(...d,s.lo),hi=Math.max(...d,s.hi),W=720,Hh=240,y=v=>Hh-12-((v-lo)/(hi-lo||1))*(Hh-24);
+ return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${s.n} 그래프"><line x1="0" x2="${W}" y1="${y(s.hi)}" y2="${y(s.hi)}" stroke="var(--r)" stroke-dasharray="6 4"/><line x1="0" x2="${W}" y1="${y(s.lo)}" y2="${y(s.lo)}" stroke="var(--w)" stroke-dasharray="6 4"/><polyline fill="none" stroke="var(--g)" stroke-width="3" stroke-linejoin="round" points="${d.map((v,i)=>`${i/(d.length-1)*W},${y(v)}`).join(' ')}"/></svg>`}
+const V={
+dash(){return `<div class="grid">${K.map(k=>{const c=st(k);return `<div class="card sc ${c}"><div class="sub">${S[k].n}</div><div class="v">${f(k,S[k].v)}<span class="u"> ${S[k].u}</span></div><span class="pill ${c}">${c==='bad'?'⚠ ':''}${L[c]}</span><div class="sub" style="margin-top:6px">기준 ${f(k,S[k].lo)} ~ ${f(k,S[k].hi)}</div></div>`}).join('')}</div>
+ <div class="cols"><div class="card"><h3>최근 이벤트 5건</h3>${ev.length?`<table>${ev.slice(0,5).map(e=>`<tr><td>${e.t}</td><td><span class="pill ${e.g==='경보'?'bad':'ok'}">${e.g}</span></td><td>${e.msg}</td></tr>`).join('')}</table>`:'<p class="sub">아직 이벤트가 없어요.</p>'}</div>
+ <div class="card"><h3>제어 상태</h3><p class="sub" style="margin-bottom:8px">모드: <b>${auto?'자동':'수동'}</b></p>${Object.values(dev).map(d=>`<div class="row" style="padding:4px 0"><span>${d.n}</span><span class="pill ${d.on?'ok':'off'}">${d.on?'켜짐':'꺼짐'}</span></div>`).join('')}</div></div>
+ <p class="sub">5초 주기로 SNMP GetBulk 수집 (센서 테이블 <code>.1.3.6.1.4.1.99999.1.1.1</code>)</p>`},
+sensor(){const s=S[sel],a=H[sel];return `<div class="tabs">${K.map(k=>`<button class="${k===sel?'on':''}" onclick="sel='${k}';draw()">${S[k].n}</button>`).join('')}</div>
+ <div class="tabs">${['1시간','1일','1주'].map(r=>`<button class="${r===range?'on':''}" onclick="range='${r}';draw()">${r}</button>`).join('')}</div>
+ <div class="card"><div class="row"><h3>${s.n} ${f(sel,s.v)} ${s.u}</h3><span class="pill ${st(sel)}">${L[st(sel)]}</span></div>${chart(sel)}<p class="sub">빨간 점선 상한 ${f(sel,s.hi)}, 노란 점선 하한 ${f(sel,s.lo)} (시연용: 최근 측정값 기준)</p></div>
+ <div class="grid"><div class="card"><div class="sub">최소</div><div class="v">${f(sel,Math.min(...a))}</div></div><div class="card"><div class="sub">최대</div><div class="v">${f(sel,Math.max(...a))}</div></div><div class="card"><div class="sub">평균</div><div class="v">${f(sel,a.reduce((x,y)=>x+y)/a.length)}</div></div></div>`},
+event(){const l=ev.filter(e=>fl==='전체'||e.g===fl);return `<div class="tabs">${['전체','경보','복구','주의'].map(x=>`<button class="${x===fl?'on':''}" onclick="fl='${x}';draw()">${x}</button>`).join('')}</div>
+ <div class="card wrap"><table><tr><th>발생시각</th><th>항목</th><th>값</th><th>등급</th><th>내용</th><th>Trap</th></tr>${l.map(e=>`<tr><td>${e.t}</td><td>${e.k?S[e.k].n:'-'}</td><td>${e.v}</td><td><span class="pill ${e.g==='경보'?'bad':e.g==='주의'?'warn':'ok'}">${e.g}</span></td><td>${e.msg}</td><td><code>${e.trap||'-'}</code></td></tr>`).join('')||'<tr><td colspan="6" class="sub">표시할 이벤트가 없어요. 대시보드 없이 임계값을 낮추거나 제어 화면의 시연 버튼을 써 보세요.</td></tr>'}</table></div>`},
+thr(){const a=user.role==='관리자';return `<div class="card"><h3>센서별 상한/하한</h3>${a?'':'<p class="sub" style="color:var(--r)">일반 계정은 조회만 할 수 있어요.</p>'}<div class="grid" style="margin-top:8px">${K.map(k=>`<div><b>${S[k].n} (${S[k].u})</b><label for="l${k}">하한</label><input id="l${k}" type="number" value="${S[k].lo}" ${a?'':'disabled'}><label for="h${k}">상한</label><input id="h${k}" type="number" value="${S[k].hi}" ${a?'':'disabled'}></div>`).join('')}</div>
+ <p class="sub" style="margin-top:10px">상한/하한 90% 지점부터 '주의', 넘으면 '경보'. 저장하면 SNMP 임계값 OID(<code>.1.2.x</code>) Set과 같은 효과예요.</p><button class="btn" style="margin-top:10px" ${a?'':'disabled'} onclick="saveThr()">저장</button></div>`},
+ctl(){const a=user.role==='관리자';return `<div class="card"><div class="row"><div><h3>자동 모드</h3><span class="sub">${auto?'센서값에 따라 팬·펌프·조명이 자동으로 동작해요':'수동으로 직접 조작해요'}</span></div><button class="tog" role="switch" aria-checked="${auto}" aria-label="자동 모드" ${a?'':'disabled'} onclick="auto=!auto;log('주의',null,'제어 모드 '+(auto?'자동':'수동')+' 전환','.1.3.4');draw()"></button></div></div>
+ <div class="card">${Object.entries(dev).map(([k,d])=>`<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div><b>${d.n}</b> <code>${d.oid}</code><div class="sub">${auto?'자동 모드 중에는 조작이 잠겨요':d.on?'켜짐':'꺼짐'}</div></div><button class="tog" role="switch" aria-checked="${d.on}" aria-label="${d.n}" ${auto||!a?'disabled':''} onclick="dev.${k}.on=!dev.${k}.on;log('복구',null,'${d.n} '+(dev.${k}.on?'켜짐':'꺼짐')+' (수동)','.1.3.x');draw()"></button></div>`).join('')}</div>
+ <div class="card"><h3>시연 도우미</h3><button class="btn gh" onclick="S.temp.v=S.temp.hi+3;toast('온도를 높였어요')">온도 급상승</button> <button class="btn gh" onclick="S.soil.v=S.soil.lo-8;toast('토양수분을 낮췄어요')">토양 건조</button></div>`},
+snmp(){return `<div class="cols"><div class="card"><h3>SNMP 에이전트</h3><label>버전</label><select id="sv" disabled><option>v2c</option></select><label for="rd">Read 커뮤니티</label><input id="rd" value="${snmp.rd}"><label for="wr">Write 커뮤니티</label><input id="wr" value="${snmp.wr}"><p class="sub" style="margin-top:8px">커뮤니티는 평문으로 전송돼요. 관리망 분리와 접근 IP 제한을 함께 쓰세요.</p></div>
+ <div class="card"><h3>Trap 수신</h3><label for="tip">수신 IP</label><input id="tip" value="${snmp.ip}"><label for="tp">포트</label><input id="tp" type="number" value="${snmp.port}"><label for="tm">방식</label><select id="tm"><option ${snmp.mode==='Trap'?'selected':''}>Trap</option><option ${snmp.mode==='Inform'?'selected':''}>Inform</option></select>
+ <div style="margin-top:12px"><button class="btn" onclick="saveSnmp()">저장</button> <button class="btn gh" onclick="testTrap()">테스트 Trap 전송</button></div></div></div><div class="card"><h3>최근 전송 Trap</h3>${ev.filter(e=>e.trap).slice(0,4).map(e=>`<p class="sub"><code>${e.trap}</code> ${e.t} · sysUpTime ${up()}</p>`).join('')||'<p class="sub">전송 기록이 없어요.</p>'}</div>`},
+sys(){return `<div class="cols"><div class="card"><h3>네트워크</h3><label for="ni">IP</label><input id="ni" value="${net.ip}"><label for="nm">서브넷</label><input id="nm" value="${net.mask}"><label for="ng">게이트웨이</label><input id="ng" value="${net.gw}"><label for="nd">DNS</label><input id="nd" value="${net.dns}"><button class="btn" style="margin-top:12px" onclick="saveNet()">적용</button></div>
+ <div class="card"><h3>시스템 정보</h3><table><tr><td>장비명</td><td>SmartFarm-RMU-01</td></tr><tr><td>펌웨어</td><td>v0.1.0</td></tr><tr><td>업타임</td><td>${up()}</td></tr><tr><td>CPU 온도</td><td>${(52+Math.random()*4).toFixed(1)} ℃</td></tr></table><div style="margin-top:12px"><button class="btn gh" onclick="toast('설정을 백업했어요 (시연)')">설정 백업</button> <button class="btn dn" onclick="if(confirm('RMU를 재부팅할까요?')){start=Date.now();toast('재부팅했어요')}">재부팅</button></div></div></div>`}};
+function up(){const s=Math.floor((Date.now()-start)/1000);return`${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m ${s%60}s`}
+function saveThr(){for(const k of K){if(+$('#l'+k).value>=+$('#h'+k).value)return toast(S[k].n+': 하한이 상한보다 작아야 해요')}
+ K.forEach(k=>{S[k].lo=+$('#l'+k).value;S[k].hi=+$('#h'+k).value});log('주의',null,'임계값 변경 저장','.1.2.x');toast('저장했어요')}
+function saveSnmp(){if(user.role!=='관리자')return toast('관리자만 변경할 수 있어요');if(!/^(\d{1,3}\.){3}\d{1,3}$/.test($('#tip').value))return toast('수신 IP 형식을 확인하세요');
+ Object.assign(snmp,{rd:$('#rd').value,wr:$('#wr').value,ip:$('#tip').value,port:+$('#tp').value,mode:$('#tm').value});toast('SNMP 설정을 저장했어요')}
+function testTrap(){log('주의',null,`테스트 ${snmp.mode} → ${snmp.ip}:${snmp.port}`,'testTrap');toast(`${snmp.mode} 전송: ${snmp.ip}:${snmp.port}`);draw()}
+function saveNet(){if(user.role!=='관리자')return toast('관리자만 변경할 수 있어요');if(!/^(\d{1,3}\.){3}\d{1,3}$/.test($('#ni').value))return toast('IP 형식을 확인하세요');net.ip=$('#ni').value;net.mask=$('#nm').value;net.gw=$('#ng').value;net.dns=$('#nd').value;toast('적용했어요. 새 IP로 다시 접속하세요');draw()}
+draw();
+</script></body></html>

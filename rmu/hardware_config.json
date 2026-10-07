@@ -1,0 +1,24 @@
+{
+  "_comment": "라즈베리파이 배선 설정 (제안 값). 실제 배선에 맞게 바꾸세요. 핀 번호는 BCM 번호입니다. 장치를 연결하지 않았으면 enabled를 false로 두면 시뮬레이션 값을 씁니다.",
+
+  "bme280":  { "enabled": true, "address": "0x76" },
+  "ads1115": {
+    "enabled": true, "address": "0x48", "soil_channel": 0,
+    "_comment": "토양수분 보정: 공기 중(마른 상태) raw 값과 물에 담갔을 때 raw 값. 센서마다 측정해서 바꾸세요.",
+    "soil_dry_raw": 26000, "soil_wet_raw": 12000
+  },
+  "ina219":  { "enabled": true, "address": "0x40" },
+  "cpu_temp_path": "/sys/class/thermal/thermal_zone0/temp",
+
+  "relays": {
+    "_comment": "릴레이 모듈이 LOW에서 켜지는 타입이면 active_low를 true로.",
+    "active_low": true,
+    "pins": { "main_fan": 17, "backup_fan": 27, "cooling_fan": 22, "pump": 23 }
+  },
+
+  "fan_tach": {
+    "_comment": "팬 회전 신호(타코) 핀. 3선/4선 팬만 해당. null이면 회전 감지를 하지 않습니다 (CLAUDE.md 7장 고장 판정 제안).",
+    "pins": { "main_fan": null, "backup_fan": null },
+    "timeout_seconds": 3
+  }
+}

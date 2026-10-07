@@ -1,0 +1,459 @@
+SMARTFARM-MIB DEFINITIONS ::= BEGIN
+
+-- Generated from oids.json by rmu/gen_mib.py. Do not edit by hand.
+-- Temporary enterprise number. Replace when the official OIDs are assigned.
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32, enterprises
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+smartfarm MODULE-IDENTITY
+    LAST-UPDATED "202610070000Z"
+    ORGANIZATION "Smartfarm RMU Capstone Team"
+    CONTACT-INFO "Smartfarm RMU Capstone Team"
+    DESCRIPTION  "Smartfarm Remote Monitoring Unit (Raspberry Pi 4B) MIB.
+                  Scalars are accessed with the .0 instance suffix."
+    REVISION     "202610070000Z"
+    DESCRIPTION  "Generated from oids.json."
+    ::= { enterprises 99999 1 }
+
+sfObjects            OBJECT IDENTIFIER ::= { smartfarm 1 }
+sfMonitor            OBJECT IDENTIFIER ::= { sfObjects 1 }
+sfCurrent            OBJECT IDENTIFIER ::= { sfMonitor 1 }
+sfCurrentValues      OBJECT IDENTIFIER ::= { sfCurrent 1 }
+sfThresholds         OBJECT IDENTIFIER ::= { sfObjects 2 }
+sfControl            OBJECT IDENTIFIER ::= { sfObjects 3 }
+sfNotifications      OBJECT IDENTIFIER ::= { sfObjects 4 }
+sfTraps              OBJECT IDENTIFIER ::= { sfNotifications 0 }
+sfTrapObjects        OBJECT IDENTIFIER ::= { sfNotifications 1 }
+
+-- Current values (read-only)
+
+sfTemperature OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Greenhouse air temperature"
+    ::= { sfCurrentValues 1 }
+
+sfHumidity OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1%"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Greenhouse relative humidity"
+    ::= { sfCurrentValues 2 }
+
+sfSoilMoisture OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "%"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Soil moisture"
+    ::= { sfCurrentValues 3 }
+
+sfSupplyVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "mV"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "External supply voltage (INA219)"
+    ::= { sfCurrentValues 4 }
+
+sfSupplyCurrent OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "mA"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "External supply current (INA219)"
+    ::= { sfCurrentValues 5 }
+
+sfSupplyPower OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "mW"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "External supply power (INA219)"
+    ::= { sfCurrentValues 6 }
+
+sfCo2 OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "ppm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "CO2 concentration (simulated)"
+    ::= { sfCurrentValues 7 }
+
+sfNutrientEc OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.01mS/cm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Nutrient EC (simulated)"
+    ::= { sfCurrentValues 8 }
+
+sfRmuTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "RMU (Raspberry Pi CPU) temperature"
+    ::= { sfCurrentValues 9 }
+
+sfMainFanTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Main ventilation fan device temperature"
+    ::= { sfCurrentValues 10 }
+
+sfBackupFanTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Backup ventilation fan device temperature"
+    ::= { sfCurrentValues 11 }
+
+sfCoolingFanTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Cooling fan device temperature"
+    ::= { sfCurrentValues 12 }
+
+sfGreenhousePower OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "W"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total greenhouse power consumption (simulated)"
+    ::= { sfCurrentValues 13 }
+
+sfAlarmLevel OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0=normal 1=caution 2=alarm 3=emergency"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Current alarm level"
+    ::= { sfCurrentValues 14 }
+
+-- Thresholds (read-write)
+
+sfTempLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Greenhouse temperature lower limit"
+    ::= { sfThresholds 1 }
+
+sfTempHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Greenhouse temperature upper limit"
+    ::= { sfThresholds 2 }
+
+sfHumidityLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1%"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Humidity lower limit"
+    ::= { sfThresholds 3 }
+
+sfHumidityHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1%"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Humidity upper limit"
+    ::= { sfThresholds 4 }
+
+sfSoilLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "%"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Soil moisture lower limit"
+    ::= { sfThresholds 5 }
+
+sfVoltageLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "mV"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Supply voltage lower limit"
+    ::= { sfThresholds 6 }
+
+sfCurrentHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "mA"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Supply current upper limit"
+    ::= { sfThresholds 7 }
+
+sfCo2High OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "ppm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "CO2 upper limit"
+    ::= { sfThresholds 8 }
+
+sfEcLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.01mS/cm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Nutrient EC lower limit"
+    ::= { sfThresholds 9 }
+
+sfRmuTempHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "RMU temperature upper limit"
+    ::= { sfThresholds 10 }
+
+sfPartTempHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Fan device temperature upper limit"
+    ::= { sfThresholds 11 }
+
+sfPartTempLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Device temperature lower limit"
+    ::= { sfThresholds 12 }
+
+sfCoolingSetpoint OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner set temperature used for automatic cooling"
+    ::= { sfThresholds 13 }
+
+sfHeatingSetpoint OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner set temperature used for automatic heating"
+    ::= { sfThresholds 14 }
+
+-- Device control (read-write)
+
+sfMainFan OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Main ventilation fan (0=off 1=on)"
+    ::= { sfControl 1 }
+
+sfBackupFan OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Backup ventilation fan (0=off 1=on)"
+    ::= { sfControl 2 }
+
+sfCoolingFan OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Cooling fan (0=off 1=on)"
+    ::= { sfControl 3 }
+
+sfAircon OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner (0=off 1=on, simulated)"
+    ::= { sfControl 4 }
+
+sfAirconSetpoint OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0.1C"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner set temperature"
+    ::= { sfControl 5 }
+
+sfHeater OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Heater (0=off 1=on, simulated)"
+    ::= { sfControl 6 }
+
+sfPump OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Water pump (0=off 1=on)"
+    ::= { sfControl 7 }
+
+sfCover OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Shade cover (0=open 1=closed, simulated)"
+    ::= { sfControl 8 }
+
+sfLights OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Greenhouse lights (0=off 1=on, simulated)"
+    ::= { sfControl 9 }
+
+sfControlMode OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0=manual 1=auto"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Control mode; manual device control is locked in auto mode"
+    ::= { sfControl 10 }
+
+-- Night mode settings (read-write)
+
+sfNightMode OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "0/1"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Night mode enabled"
+    ::= { sfControl 11 }
+
+sfNightStart OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "minutes"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Night mode start time (minutes after midnight)"
+    ::= { sfControl 12 }
+
+sfNightEnd OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "minutes"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Night mode end time (minutes after midnight)"
+    ::= { sfControl 13 }
+
+sfAlarmMessage OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "Alarm or clear message sent with notifications (UTF-8)"
+    ::= { sfTrapObjects 1 }
+
+highTempAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Greenhouse temperature above upper limit"
+    ::= { sfTraps 1 }
+
+lowTempAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Greenhouse temperature below lower limit"
+    ::= { sfTraps 2 }
+
+dryAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Soil moisture below lower limit"
+    ::= { sfTraps 3 }
+
+co2HighAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "CO2 concentration above upper limit"
+    ::= { sfTraps 4 }
+
+nutrientLowAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Nutrient EC below lower limit"
+    ::= { sfTraps 5 }
+
+partTempAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Device temperature out of range"
+    ::= { sfTraps 6 }
+
+ventFailover NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Main fan failed, backup fan took over"
+    ::= { sfTraps 7 }
+
+emergencyAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Emergency: worsening after automatic action or no alternative"
+    ::= { sfTraps 8 }
+
+lowVoltageAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Supply voltage below lower limit"
+    ::= { sfTraps 9 }
+
+overCurrentAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Supply current above upper limit"
+    ::= { sfTraps 10 }
+
+powerCutAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "External power cut"
+    ::= { sfTraps 11 }
+
+nightIntrusionAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Motion detected by CCTV during night mode"
+    ::= { sfTraps 12 }
+
+sensorFault NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Sensor read error"
+    ::= { sfTraps 13 }
+
+alarmClear NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Alarm cleared"
+    ::= { sfTraps 14 }
+
+END

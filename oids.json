@@ -1,0 +1,90 @@
+{
+  "_comment": "임시 OID입니다. 교수님이 OID를 지정하면 이 파일만 수정하고 `python rmu/gen_mib.py`로 SMARTFARM-MIB.mib를 다시 만듭니다. 코드에는 OID를 직접 쓰지 않습니다. snmp_unit은 SNMP로 주고받을 때의 단위이고, REST API는 사람이 읽는 단위(℃, %, V, A, W)를 씁니다. SNMP 스칼라 값은 OID 뒤에 .0을 붙여 조회합니다 (예: ...99999.1.1.1.1.1.0). thresholds 하위 번호와 notifications 번호는 CLAUDE.md에 없어 임시로 정한 값입니다.",
+  "base": ".1.3.6.1.4.1.99999.1",
+
+  "nodes": {
+    ".1": "sfObjects",
+    ".1.1": "sfMonitor",
+    ".1.1.1": "sfCurrent",
+    ".1.1.1.1": "sfCurrentValues",
+    ".1.2": "sfThresholds",
+    ".1.3": "sfControl",
+    ".1.4": "sfNotifications",
+    ".1.4.0": "sfTraps",
+    ".1.4.1": "sfTrapObjects"
+  },
+
+  "status": {
+    "temperature":       { "oid": ".1.1.1.1.1",  "snmp_unit": "0.1C", "desc": "Greenhouse air temperature" },
+    "humidity":          { "oid": ".1.1.1.1.2",  "snmp_unit": "0.1%", "desc": "Greenhouse relative humidity" },
+    "soil_moisture":     { "oid": ".1.1.1.1.3",  "snmp_unit": "%", "desc": "Soil moisture" },
+    "supply_voltage":    { "oid": ".1.1.1.1.4",  "snmp_unit": "mV", "desc": "External supply voltage (INA219)" },
+    "supply_current":    { "oid": ".1.1.1.1.5",  "snmp_unit": "mA", "desc": "External supply current (INA219)" },
+    "supply_power":      { "oid": ".1.1.1.1.6",  "snmp_unit": "mW", "desc": "External supply power (INA219)" },
+    "co2":               { "oid": ".1.1.1.1.7",  "snmp_unit": "ppm", "desc": "CO2 concentration (simulated)" },
+    "nutrient_ec":       { "oid": ".1.1.1.1.8",  "snmp_unit": "0.01mS/cm", "desc": "Nutrient EC (simulated)" },
+    "rmu_temp":          { "oid": ".1.1.1.1.9",  "snmp_unit": "0.1C", "desc": "RMU (Raspberry Pi CPU) temperature" },
+    "main_fan_temp":     { "oid": ".1.1.1.1.10", "snmp_unit": "0.1C", "desc": "Main ventilation fan device temperature" },
+    "backup_fan_temp":   { "oid": ".1.1.1.1.11", "snmp_unit": "0.1C", "desc": "Backup ventilation fan device temperature" },
+    "cooling_fan_temp":  { "oid": ".1.1.1.1.12", "snmp_unit": "0.1C", "desc": "Cooling fan device temperature" },
+    "greenhouse_power":  { "oid": ".1.1.1.1.13", "snmp_unit": "W", "desc": "Total greenhouse power consumption (simulated)" },
+    "alarm_level":       { "oid": ".1.1.1.1.14", "snmp_unit": "0=normal 1=caution 2=alarm 3=emergency", "desc": "Current alarm level" }
+  },
+
+  "thresholds": {
+    "temp_low":        { "oid": ".1.2.1",  "snmp_unit": "0.1C", "desc": "Greenhouse temperature lower limit" },
+    "temp_high":       { "oid": ".1.2.2",  "snmp_unit": "0.1C", "desc": "Greenhouse temperature upper limit" },
+    "humidity_low":    { "oid": ".1.2.3",  "snmp_unit": "0.1%", "desc": "Humidity lower limit" },
+    "humidity_high":   { "oid": ".1.2.4",  "snmp_unit": "0.1%", "desc": "Humidity upper limit" },
+    "soil_low":        { "oid": ".1.2.5",  "snmp_unit": "%", "desc": "Soil moisture lower limit" },
+    "voltage_low":     { "oid": ".1.2.6",  "snmp_unit": "mV", "desc": "Supply voltage lower limit" },
+    "current_high":    { "oid": ".1.2.7",  "snmp_unit": "mA", "desc": "Supply current upper limit" },
+    "co2_high":        { "oid": ".1.2.8",  "snmp_unit": "ppm", "desc": "CO2 upper limit" },
+    "ec_low":          { "oid": ".1.2.9",  "snmp_unit": "0.01mS/cm", "desc": "Nutrient EC lower limit" },
+    "rmu_temp_high":   { "oid": ".1.2.10", "snmp_unit": "0.1C", "desc": "RMU temperature upper limit" },
+    "part_temp_high":  { "oid": ".1.2.11", "snmp_unit": "0.1C", "desc": "Fan device temperature upper limit" },
+    "part_temp_low":   { "oid": ".1.2.12", "snmp_unit": "0.1C", "desc": "Device temperature lower limit" },
+    "cooling_setpoint": { "oid": ".1.2.13", "snmp_unit": "0.1C", "desc": "Air conditioner set temperature used for automatic cooling" },
+    "heating_setpoint": { "oid": ".1.2.14", "snmp_unit": "0.1C", "desc": "Air conditioner set temperature used for automatic heating" }
+  },
+
+  "control": {
+    "main_fan":         { "oid": ".1.3.1",  "snmp_unit": "0/1", "desc": "Main ventilation fan (0=off 1=on)" },
+    "backup_fan":       { "oid": ".1.3.2",  "snmp_unit": "0/1", "desc": "Backup ventilation fan (0=off 1=on)" },
+    "cooling_fan":      { "oid": ".1.3.3",  "snmp_unit": "0/1", "desc": "Cooling fan (0=off 1=on)" },
+    "aircon":           { "oid": ".1.3.4",  "snmp_unit": "0/1", "desc": "Air conditioner (0=off 1=on, simulated)" },
+    "aircon_setpoint":  { "oid": ".1.3.5",  "snmp_unit": "0.1C", "desc": "Air conditioner set temperature" },
+    "heater":           { "oid": ".1.3.6",  "snmp_unit": "0/1", "desc": "Heater (0=off 1=on, simulated)" },
+    "pump":             { "oid": ".1.3.7",  "snmp_unit": "0/1", "desc": "Water pump (0=off 1=on)" },
+    "cover":            { "oid": ".1.3.8",  "snmp_unit": "0/1", "desc": "Shade cover (0=open 1=closed, simulated)" },
+    "lights":           { "oid": ".1.3.9",  "snmp_unit": "0/1", "desc": "Greenhouse lights (0=off 1=on, simulated)" },
+    "control_mode":     { "oid": ".1.3.10", "snmp_unit": "0=manual 1=auto", "desc": "Control mode; manual device control is locked in auto mode" }
+  },
+
+  "settings": {
+    "night_mode":       { "oid": ".1.3.11", "snmp_unit": "0/1", "desc": "Night mode enabled" },
+    "night_start":      { "oid": ".1.3.12", "snmp_unit": "minutes", "desc": "Night mode start time (minutes after midnight)" },
+    "night_end":        { "oid": ".1.3.13", "snmp_unit": "minutes", "desc": "Night mode end time (minutes after midnight)" }
+  },
+
+  "trap_objects": {
+    "alarm_message":    { "oid": ".1.4.1.1", "desc": "Alarm or clear message sent with notifications" }
+  },
+
+  "notifications": {
+    "highTempAlarm":       { "oid": ".1.4.0.1",  "desc": "Greenhouse temperature above upper limit" },
+    "lowTempAlarm":        { "oid": ".1.4.0.2",  "desc": "Greenhouse temperature below lower limit" },
+    "dryAlarm":            { "oid": ".1.4.0.3",  "desc": "Soil moisture below lower limit" },
+    "co2HighAlarm":        { "oid": ".1.4.0.4",  "desc": "CO2 concentration above upper limit" },
+    "nutrientLowAlarm":    { "oid": ".1.4.0.5",  "desc": "Nutrient EC below lower limit" },
+    "partTempAlarm":       { "oid": ".1.4.0.6",  "desc": "Device temperature out of range" },
+    "ventFailover":        { "oid": ".1.4.0.7",  "desc": "Main fan failed, backup fan took over" },
+    "emergencyAlarm":      { "oid": ".1.4.0.8",  "desc": "Emergency: worsening after automatic action or no alternative" },
+    "lowVoltageAlarm":     { "oid": ".1.4.0.9",  "desc": "Supply voltage below lower limit" },
+    "overCurrentAlarm":    { "oid": ".1.4.0.10", "desc": "Supply current above upper limit" },
+    "powerCutAlarm":       { "oid": ".1.4.0.11", "desc": "External power cut" },
+    "nightIntrusionAlarm": { "oid": ".1.4.0.12", "desc": "Motion detected by CCTV during night mode" },
+    "sensorFault":         { "oid": ".1.4.0.13", "desc": "Sensor read error" },
+    "alarmClear":          { "oid": ".1.4.0.14", "desc": "Alarm cleared" }
+  }
+}

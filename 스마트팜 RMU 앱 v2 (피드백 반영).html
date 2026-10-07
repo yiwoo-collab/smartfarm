@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스마트팜 RMU 앱 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF3E6;--card:#fff;--ink:#1B2A22;--sub:#5D6E63;--line:#D8E1CC;--g:#1F6B45;--gs:#DDEBD3;--w:#B9820A;--ws:#FBEFC8;--r:#C8341F;--rs:#FBDCD5;--off:#8A958E;--os:#E4E8E2;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121A15;--card:#1B261F;--ink:#E6EEE8;--sub:#9DB0A3;--line:#2B3A31;--g:#5FCB8C;--gs:#22392B;--w:#E8B931;--ws:#3A3216;--r:#FF7B66;--rs:#43221D;--off:#7E8C83;--os:#26312A}}
+:root[data-theme="dark"]{--bg:#121A15;--card:#1B261F;--ink:#E6EEE8;--sub:#9DB0A3;--line:#2B3A31;--g:#5FCB8C;--gs:#22392B;--w:#E8B931;--ws:#3A3216;--r:#FF7B66;--rs:#43221D;--off:#7E8C83;--os:#26312A}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 "Noto Sans KR",system-ui,sans-serif;display:flex;justify-content:center}
+#app{width:100%;max-width:430px;height:100%;display:flex;flex-direction:column}
+main{flex:1;overflow-y:auto;padding:16px}
+h1{font-size:21px}h2{font-size:17px}.sub{color:var(--sub);font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ok{background:var(--gs);color:var(--g)}.warn{background:var(--ws);color:var(--w)}.bad{background:var(--rs);color:var(--r)}.off{background:var(--os);color:var(--off)}
+.status{border-radius:16px;padding:14px 16px;margin:10px 0}.status b{font-size:20px;display:block}
+.pager{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -16px;padding:0 16px;scrollbar-width:none}
+.pager::-webkit-scrollbar{display:none}
+.pg{flex:0 0 100%;scroll-snap-align:center}
+.dots{display:flex;justify-content:center;gap:6px;margin:8px 0}.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--g)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px}
+.sc.warn{border-color:var(--w)}.sc.bad{border-color:var(--r)}.sc.off{border-style:dashed}
+.sc .v{font-size:25px;font-weight:700;line-height:1.2}.u{font-size:13px;font-weight:400;color:var(--sub)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:1px 9px;border-radius:99px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;padding:8px 0 6px;border:0;background:none;color:var(--sub);font:inherit;font-size:11px;cursor:pointer}
+nav button i{display:block;font-style:normal;font-size:19px}nav button.on{color:var(--g);font-weight:700}
+button:focus-visible,input:focus-visible{outline:3px solid var(--g);outline-offset:2px}
+.btn{background:var(--g);color:var(--bg);border:0;border-radius:12px;padding:11px 14px;font:700 14px inherit;font-family:inherit;cursor:pointer;width:100%}
+.btn.ghost{background:none;color:var(--g);border:2px solid var(--g)}.btn.sm{width:auto;padding:6px 12px;font-size:13px}
+input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;margin:4px 0 10px}
+label{font-size:13px;color:var(--sub)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px}
+.chips button{flex:none;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.chips button.on{background:var(--g);color:var(--bg);border-color:var(--g)}
+.tog{width:52px;height:29px;border-radius:99px;border:0;background:var(--off);position:relative;cursor:pointer;flex:none}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:#fff;transition:left .15s}
+.tog[aria-checked=true]{background:var(--g)}.tog[aria-checked=true]::after{left:26px}.tog:disabled{opacity:.45}
+.link{background:none;border:0;color:var(--g);font:700 14px inherit;font-family:inherit;cursor:pointer}
+.tag{font-size:11px;font-weight:700;padding:1px 8px;border-radius:6px;background:var(--os);color:var(--sub)}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:12px;font-size:14px;z-index:9;max-width:90%}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:8;padding:24px}.modal .card{max-width:340px;width:100%}
+</style></head><body>
+<div id="app"><main id="main"></main><nav id="nav"></nav></div>
+<script>
+const D={temp:{n:'온도',u:'℃',d:1,min:5,max:45},hum:{n:'습도',u:'%',d:0,min:20,max:100},soil:{n:'토양수분',u:'%',d:0,min:5,max:100},volt:{n:'공급 전압',u:'V',d:2,min:0,max:6},cur:{n:'공급 전류',u:'mA',d:0,min:0,max:3500}};
+const keys=Object.keys(D);
+function mk(name,crop,ip,t){const f={name,crop,ip,net:true,auto:true,fan:false,pump:false,eco:false,lock:false,fault:{},al:{},ai:'',ramp:0,rx:null,
+ v:{temp:t,hum:65,soil:48,volt:5.1,cur:800},th:{temp:[15,30],hum:[50,85],soil:[35,80],volt:[4.75,5.6],cur:[0,2500]}};return f}
+let farms=[mk('방울토마토 1동','방울토마토','192.168.0.50',24.5),mk('상추 2동','상추','192.168.0.51',21),mk('딸기 3동','딸기','192.168.0.52',22.5)];
+let ev=[],unread=0,tab='home',view='main',cur=0,af='전체',authed=false;
+const $=s=>document.querySelector(s);
+const fmt=(k,x)=>x.toFixed(D[k].d);
+function st(f,k){if(!f.net)return'off';if(f.fault[k])return'err';const[l,h]=f.th[k],x=f.v[k];if(x>h||x<l)return'bad';const m=(h-l)*.1;if(k!=='cur'&&(x>h-m||x<l+m))return'warn';return'ok'}
+const lab={ok:'정상',warn:'주의',bad:'경보',off:'통신 두절',err:'센서 오류'};const cls=s=>s==='err'?'off':s;
+const why=(f,k)=>{const x=f.v[k],[l,h]=f.th[k];return x>h?`${D[k].n} ${fmt(k,x)}${D[k].u}, 상한 ${fmt(k,h)} 초과`:`${D[k].n} ${fmt(k,x)}${D[k].u}, 하한 ${fmt(k,l)} 미만`};
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2200)}
+const now=()=>new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function log(f,type,text){ev.unshift({f:f.name,type,text,t:now()});unread++;if(type==='경보')toast('🔔 '+f.name+': '+text)}
+function tick(){farms.forEach(f=>{if(!f.net)return;const V=f.v,hist=f._h=f._h||[];
+ keys.forEach(k=>{if(f.fault[k])return;const r=D[k].max-D[k].min;let d=(Math.random()-.5)*r*.01;
+  if(k==='temp'){if(f.ramp>0){d+=.9;f.ramp--}if(f.fan&&!f.eco)d-=.5;else if(f.fan)d-=.25}
+  if(k==='soil'){d-=.05;if(f.pump)d+=1.6}
+  if(k==='volt'){d=(5.1-V.volt)*.1+(Math.random()-.5)*.02}
+  if(k==='cur'){d=((800+(f.fan?150:0)+(f.pump?300:0))-V.cur)*.15+(Math.random()-.5)*20}
+  V[k]=Math.min(D[k].max,Math.max(D[k].min,V[k]+d))});
+ hist.push(V.temp);if(hist.length>6)hist.shift();
+ f.eco=st(f,'volt')==='bad';
+ keys.forEach(k=>{const bad=st(f,k)==='bad',err=st(f,k)==='err';
+  if(bad&&!f.al[k]){f.al[k]=1;log(f,'경보',why(f,k));
+   if(f.auto){if(k==='temp'&&V.temp>f.th.temp[1]){f.fan=true;f.ai='온도가 상한을 넘어 팬을 켰어요'}if(k==='soil'){f.pump=true;f._pt=30}}
+   if(k==='cur'){f.fan=false;f.pump=false;f.lock=true;log(f,'경보','과전류로 장치를 차단했어요')}
+   if(k==='volt')log(f,'경보','전압 저하: 팬 속도를 낮추고 제어를 제한해요')}
+  if(!bad&&f.al[k]){f.al[k]=0;log(f,'복구',D[k].n+' 정상 범위로 돌아왔어요');if(k==='temp'&&f.auto)f.fan=false;if(k==='soil')f.pump=false;if(k==='cur')f.lock=false}
+  if(err&&!f.al['e'+k]){f.al['e'+k]=1;log(f,'경보',D[k].n+' 센서 오류')}if(!err&&f.al['e'+k]){f.al['e'+k]=0;log(f,'복구',D[k].n+' 센서 복구')}});
+ if(f.pump&&f._pt!==undefined&&--f._pt<=0){f.pump=false;f._pt=undefined}
+ if(f.auto&&!f.fan&&hist.length>=4&&!f.al.temp){const sl=(hist[hist.length-1]-hist[0])/(hist.length-1),eta=(f.th.temp[1]-V.temp)/sl;
+  if(sl>.4&&eta>0&&eta<8){f.fan=true;f.ai=`온도가 틱당 +${sl.toFixed(1)}℃ 오르는 중이라 약 ${Math.round(eta*2)}초 뒤 상한 도달 예상. 미리 팬을 켰어요 (AI 선가동)`;log(f,'복구','AI 선가동: '+f.ai)}}
+ f.rx=now()});render(true)}
+setInterval(tick,2000);
+
+function head(f){const s=keys.map(k=>st(f,k));if(!f.net)return{c:'off',t:'통신 두절',d:`마지막 수신 ${f.rx||'-'}`};
+ const b=keys.filter(k=>st(f,k)==='bad');if(b.length)return{c:'bad',t:'경보 '+b.length+'건',d:b.map(k=>why(f,k)).join('. ')};
+ if(s.includes('err'))return{c:'warn',t:'센서 확인 필요',d:keys.filter(k=>st(f,k)==='err').map(k=>D[k].n).join(', ')+' 오류'};
+ if(s.includes('warn'))return{c:'warn',t:'주의',d:'일부 값이 기준에 가까워요'};return{c:'ok',t:'정상',d:'모든 항목이 기준 범위 안에 있어요'}}
+function page(f){const h=head(f);return `<div class="row"><div><h2>${f.name}</h2><div class="sub">마지막 수신 ${f.rx||'-'}</div></div><span class="tag">${f.crop}</span></div>
+<div class="status ${h.c}" role="status"><b>${h.c==='bad'?'⚠ ':h.c==='ok'?'✓ ':''}${h.t}</b><span style="font-size:14px">${h.d}</span></div>
+<div class="grid">${['temp','hum','soil','volt','cur'].map(k=>{const s=st(f,k);return `<div class="sc ${cls(s)}"><div class="sub">${D[k].n}</div><div class="v">${s==='err'?'--':fmt(k,f.v[k])}<span class="u"> ${D[k].u}</span></div><span class="badge ${cls(s)}">${s==='bad'?'⚠ ':''}${lab[s]}</span></div>`}).join('')}
+<div class="sc"><div class="sub">장치</div><div style="font-size:14px;margin-top:4px">팬 ${f.fan?'켜짐':'꺼짐'}${f.eco&&f.fan?' (저속)':''}<br>펌프 ${f.pump?'켜짐':'꺼짐'}<br>${f.auto?'자동 모드':'수동 모드'}</div></div></div>`}
+function chips(sel,all){return `<div class="chips">${all?`<button class="${af==='전체'?'on':''}" onclick="af='전체';render()">전체</button>`:''}${farms.map((f,i)=>`<button class="${(all?af===f.name:cur===i)?'on':''}" onclick="${all?`af='${f.name}'`:`cur=${i}`};render()">${f.name}</button>`).join('')}</div>`}
+const V={
+home(){return `<div class="row" style="margin-bottom:4px"><h1>스마트팜</h1><button class="link" onclick="view='conn';render()">⚙ 연결설정</button></div>
+<div class="pager" id="pager" onscroll="pgScroll()">${farms.map((f,i)=>`<div class="pg" id="pg${i}">${page(f)}</div>`).join('')}</div>
+<div class="dots" id="dots">${farms.map((_,i)=>`<i class="${i===cur?'on':''}"></i>`).join('')}</div><p class="sub" style="text-align:center">좌우로 넘기면 다른 농장을 볼 수 있어요</p>`},
+alerts(){unread=0;const l=ev.filter(e=>af==='전체'||e.f===af);return `<h1>알림</h1><p class="sub" style="margin:4px 0 10px">모든 농장의 경보와 복구가 모여요.</p>${chips(0,1)}
+${l.length?l.map(e=>`<div class="card"><div class="row"><b>${e.type==='경보'?'⚠':'✓'} ${e.type}</b><span class="sub">${e.t}</span></div><span class="tag">${e.f}</span><div style="margin-top:4px">${e.text}</div></div>`).join(''):'<div class="card sub" style="text-align:center;padding:28px">최근 이상이 없어요.<br>설정 &gt; 시나리오 도우미로 경보를 만들어 보세요.</div>'}`},
+power(){const f=farms[cur],w=f.v.volt*f.v.cur/1000;return `<h1>전원 공급</h1><p class="sub" style="margin:4px 0 10px">RMU에 들어오는 전원 상태예요.</p>${chips()}
+<div class="grid"><div class="sc ${cls(st(f,'volt'))}"><div class="sub">전압</div><div class="v">${fmt('volt',f.v.volt)}<span class="u"> V</span></div><span class="badge ${cls(st(f,'volt'))}">${lab[st(f,'volt')]}</span></div>
+<div class="sc ${cls(st(f,'cur'))}"><div class="sub">전류</div><div class="v">${fmt('cur',f.v.cur)}<span class="u"> mA</span></div><span class="badge ${cls(st(f,'cur'))}">${lab[st(f,'cur')]}</span></div></div>
+<div class="card" style="margin-top:10px"><div class="row"><span>소비 전력</span><b>${w.toFixed(2)} W</b></div><div class="sub">전압 × 전류로 계산해요. 기준: 전압 ${f.th.volt[0]}V 이상, 전류 ${f.th.cur[1]}mA 이하</div></div>
+${f.eco?'<div class="status warn"><b>전력 절약 모드</b>전압이 낮아 팬을 저속으로 돌리고 있어요.</div>':''}${f.lock?'<div class="status bad"><b>장치 차단됨</b>과전류로 팬·펌프를 껐어요. 전류가 정상으로 돌아오면 풀려요.</div>':''}`},
+control(){const f=farms[cur],dis=f.auto||f.lock||!f.net;return `<h1>제어</h1><p class="sub" style="margin:4px 0 10px">현장에 가지 않고 장치를 켜고 꺼요.</p>${chips()}
+<div class="card row"><div><b>자동 모드</b><div class="sub">${f.auto?'센서 값에 따라 자동으로 켜져요':'직접 조작해요'}</div></div><button class="tog" role="switch" aria-checked="${f.auto}" aria-label="자동 모드" ${f.net?'':'disabled'} onclick="farms[${cur}].auto=!farms[${cur}].auto;render()"></button></div>
+${f.ai?`<div class="card" style="border-color:var(--g)"><b>🤖 AI 판단</b><div class="sub" style="margin-top:4px">${f.ai}</div></div>`:''}
+${[['fan','환기팬'],['pump','워터펌프']].map(([k,n])=>`<div class="card row" style="${dis?'opacity:.6':''}"><div><b>${n}</b><div class="sub">${!f.net?'통신 두절 중에는 조작할 수 없어요':f.lock?'과전류로 차단됨':f.auto?'자동 모드 중에는 잠겨 있어요':f[k]?'켜짐':'꺼짐'}</div></div><button class="tog" role="switch" aria-checked="${f[k]}" aria-label="${n}" ${dis?'disabled':''} onclick="ask('${k}','${n}')"></button></div>`).join('')}`},
+settings(){const f=farms[cur];return `<h1>설정</h1><p class="sub" style="margin:4px 0 10px">기준 범위를 벗어나면 경보가 울려요.</p>${chips()}
+${keys.map(k=>`<div class="card"><b>${D[k].n}</b> <span class="sub">${D[k].u}</span><div class="row"><div style="flex:1"><label for="l${k}">하한</label><input id="l${k}" type="number" step="any" value="${f.th[k][0]}"></div><div style="flex:1"><label for="h${k}">상한</label><input id="h${k}" type="number" step="any" value="${f.th[k][1]}"></div></div></div>`).join('')}
+<button class="btn" onclick="saveSet()">저장</button>
+<div class="card" style="margin-top:14px"><b>시나리오 도우미</b><div class="sub" style="margin-bottom:8px">${f.name}에 상황을 만들어 보여줘요.</div>
+<div class="grid"><button class="btn ghost" onclick="sc('hot')">고온 경보</button><button class="btn ghost" onclick="sc('ai')">AI 선가동</button><button class="btn ghost" onclick="sc('dry')">토양 건조</button><button class="btn ghost" onclick="sc('volt')">전압 저하</button><button class="btn ghost" onclick="sc('amp')">과전류</button><button class="btn ghost" onclick="sc('err')">센서 오류</button><button class="btn ghost" onclick="sc('net')">${f.net?'통신 두절':'통신 복구'}</button><button class="btn ghost" onclick="sc('fix')">모두 복구</button></div></div>`},
+conn(){return `<button class="link" onclick="view='main';render()">‹ 홈으로</button><h1 style="margin:6px 0">연결설정</h1><p class="sub" style="margin-bottom:12px">농장(작물)마다 연결 프로필을 만들어요. 홈에서 프로필별로 넘겨 볼 수 있어요.</p>
+${farms.map((f,i)=>`<div class="card row"><div><b>${f.name}</b><div class="sub">${f.crop} · ${f.ip}</div></div><span class="row" style="gap:6px"><span class="badge ${f.net?'ok':'off'}">${f.net?'연결됨':'끊김'}</span><button class="btn ghost sm" onclick="delF(${i})">삭제</button></span></div>`).join('')}
+<div class="card"><h2 style="margin-bottom:6px">프로필 추가</h2><label for="an">농장 이름</label><input id="an" type="text" placeholder="예: 파프리카 4동"><label for="ac">작물</label><input id="ac" type="text" placeholder="예: 파프리카"><label for="ai">RMU IP 주소</label><input id="ai" type="text" inputmode="decimal" placeholder="192.168.0.53"><button class="btn" onclick="addF()">연결 테스트 후 추가</button></div>`}};
+function pgScroll(){const p=$('#pager');const i=Math.round(p.scrollLeft/p.clientWidth);if(i!==cur){cur=i;document.querySelectorAll('#dots i').forEach((d,j)=>d.className=j===i?'on':'')}}
+function sc(t){const f=farms[cur];if(t==='hot'){f.v.temp=f.th.temp[1]+2}if(t==='ai'){f.auto=true;f.fan=false;f.v.temp=f.th.temp[1]-3;f._h=[];f.ramp=6}
+ if(t==='dry'){f.v.soil=f.th.soil[0]-8}if(t==='volt'){f.v.volt=4.4}if(t==='amp'){f.v.cur=3000}if(t==='err'){f.fault.hum=1}
+ if(t==='net'){f.net=!f.net}if(t==='fix'){f.fault={};f.net=true;f.ramp=0}toast('시나리오를 적용했어요');render()}
+function gate(go){if(authed)return go();const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="card"><h2>로그인이 필요해요</h2><p class="sub" style="margin:6px 0">제어와 설정은 권한이 필요해요. (시연 비밀번호 1234)</p><input id="pw" type="password" aria-label="비밀번호" placeholder="비밀번호"><div id="pe" class="sub" style="color:var(--r);min-height:20px"></div><button class="btn" id="ok">로그인</button><button class="btn ghost" style="margin-top:8px" id="no">취소</button></div>`;
+ document.body.append(m);$('#no').onclick=()=>m.remove();$('#ok').onclick=()=>{if($('#pw').value==='1234'){authed=true;m.remove();go()}else $('#pe').textContent='비밀번호가 틀렸어요'}}
+function ask(k,n){const f=farms[cur],m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="card"><h2>${n} ${f[k]?'끄기':'켜기'}</h2><p class="sub" style="margin:6px 0 14px">${k==='pump'&&!f[k]?'물이 공급돼요. 작물 상태를 확인했나요?':'명령을 RMU로 보낼게요.'}</p><button class="btn" id="y">확인</button><button class="btn ghost" style="margin-top:8px" id="n">취소</button></div>`;
+ document.body.append(m);$('#n').onclick=()=>m.remove();$('#y').onclick=()=>{m.remove();f[k]=!f[k];render()}}
+function saveSet(){const f=farms[cur];for(const k of keys){if(+$('#l'+k).value>=+$('#h'+k).value)return toast(D[k].n+': 하한이 상한보다 작아야 해요')}keys.forEach(k=>f.th[k]=[+$('#l'+k).value,+$('#h'+k).value]);toast('저장했어요')}
+function delF(i){if(farms.length===1)return toast('프로필은 최소 1개가 필요해요');farms.splice(i,1);cur=0;render()}
+function addF(){const n=$('#an').value.trim(),c=$('#ac').value.trim(),ip=$('#ai').value.trim();if(!n||!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip))return toast('이름과 올바른 IP를 입력하세요');
+ toast('연결 확인 중…');setTimeout(()=>{farms.push(mk(n,c||'작물',ip,23));toast('프로필을 추가했어요');render()},800)}
+function render(soft){if(document.querySelector('.modal'))return;const m=$('#main');
+ if(soft){if(view==='main'&&tab==='home'&&$('#pager')){farms.forEach((f,i)=>{const e=$('#pg'+i);if(e)e.innerHTML=page(f)});}else if(view==='main'&&['power','alerts'].includes(tab)){const y=m.scrollTop;m.innerHTML=V[tab]();m.scrollTop=y}
+  navDraw();return}
+ const y=m.scrollTop;m.innerHTML=view==='conn'?V.conn():V[tab]();m.scrollTop=y;
+ if(tab==='home'&&view==='main'){const p=$('#pager');if(p)p.scrollLeft=cur*p.clientWidth}navDraw()}
+function navDraw(){$('#nav').innerHTML=view==='conn'?'':[['home','🌱','홈'],['alerts','🔔','알림'],['power','🔌','전원'],['control','🎛','제어'],['settings','⚙','설정']].map(([t,i,l])=>`<button class="${tab===t?'on':''}" onclick="go('${t}')"><i>${i}</i>${l}${t==='alerts'&&unread?' <span style="color:var(--r)">●</span>':''}</button>`).join('')}
+function go(t){const f=()=>{tab=t;view='main';render()};if(t==='control'||t==='settings')gate(f);else f()}
+render();
+</script></body></html>

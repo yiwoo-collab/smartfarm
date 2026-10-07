@@ -1,0 +1,6 @@
+# 라즈베리파이(1단계 실물)에서만 필요. PC의 모의 RMU는 설치할 것이 없다.
+adafruit-blinka
+adafruit-circuitpython-bme280
+adafruit-circuitpython-ads1x15<3   # hardware.py가 2.x API(ADS.P0)를 사용
+adafruit-circuitpython-ina219
+gpiozero

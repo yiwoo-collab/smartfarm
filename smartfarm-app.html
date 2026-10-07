@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스마트팜 RMU 앱</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF3E6;--card:#fff;--ink:#1B2A22;--sub:#5D6E63;--line:#D8E1CC;--g:#1F6B45;--gs:#DDEBD3;--w:#B9820A;--ws:#FBEFC8;--r:#C8341F;--rs:#FBDCD5;--off:#8A958E;--os:#E4E8E2;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121A15;--card:#1B261F;--ink:#E6EEE8;--sub:#9DB0A3;--line:#2B3A31;--g:#5FCB8C;--gs:#22392B;--w:#E8B931;--ws:#3A3216;--r:#FF7B66;--rs:#43221D;--off:#7E8C83;--os:#26312A}}
+:root[data-theme="dark"]{--bg:#121A15;--card:#1B261F;--ink:#E6EEE8;--sub:#9DB0A3;--line:#2B3A31;--g:#5FCB8C;--gs:#22392B;--w:#E8B931;--ws:#3A3216;--r:#FF7B66;--rs:#43221D;--off:#7E8C83;--os:#26312A}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 "Noto Sans KR",system-ui,sans-serif;display:flex;justify-content:center}
+#app{width:100%;max-width:430px;height:100%;display:flex;flex-direction:column;background:var(--bg)}
+main{flex:1;overflow-y:auto;padding:16px 16px 24px}
+h1{font-size:22px;font-weight:700}h2{font-size:17px;font-weight:700}
+.sub{color:var(--sub);font-size:13px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.status{border-radius:18px;padding:18px;margin-bottom:14px}
+.status b{font-size:22px;display:block}
+.ok{background:var(--gs);color:var(--g)}.warn{background:var(--ws);color:var(--w)}.bad{background:var(--rs);color:var(--r)}.off{background:var(--os);color:var(--off)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px;text-align:left;color:var(--ink);font:inherit;cursor:pointer;width:100%}
+.sc.warn{border-color:var(--w)}.sc.bad{border-color:var(--r)}.sc.off{border-style:dashed}
+.sc .v{font-size:28px;font-weight:700;line-height:1.2}.sc .u{font-size:14px;font-weight:400;color:var(--sub)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;margin-top:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;padding:10px 0 8px;border:0;background:none;color:var(--sub);font:inherit;font-size:12px;cursor:pointer}
+nav button i{display:block;font-style:normal;font-size:20px}
+nav button.on{color:var(--g);font-weight:700}
+button:focus-visible,input:focus-visible{outline:3px solid var(--g);outline-offset:2px}
+.btn{background:var(--g);color:var(--bg);border:0;border-radius:12px;padding:12px 16px;font:700 15px inherit;font-family:inherit;cursor:pointer;width:100%}
+.btn.ghost{background:none;color:var(--g);border:2px solid var(--g)}
+input[type=text],input[type=number]{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;margin:4px 0 10px}
+label{font-size:13px;color:var(--sub)}
+.tog{width:54px;height:30px;border-radius:99px;border:0;background:var(--off);position:relative;cursor:pointer;flex:none}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}
+.tog[aria-checked=true]{background:var(--g)}.tog[aria-checked=true]::after{left:27px}
+.tabs{display:flex;gap:6px;margin:10px 0}
+.tabs button{flex:1;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.tabs button.on{background:var(--g);color:var(--bg);border-color:var(--g)}
+.back{background:none;border:0;color:var(--g);font:700 15px inherit;font-family:inherit;padding:0 0 8px;cursor:pointer}
+svg{width:100%;height:auto;display:block}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--r);margin-right:6px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:9;max-width:90%}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:8;padding:24px}
+.modal .card{max-width:340px;width:100%}
+</style></head><body>
+<div id="app"><main id="main"></main><nav id="nav"></nav></div>
+<script>
+const S={
+ temp:{n:'온도',u:'℃',v:24.5,lo:15,hi:30,rng:'적정 18~28℃',d:1,min:5,max:45},
+ hum:{n:'습도',u:'%',v:65,lo:50,hi:85,rng:'적정 60~80%',d:0,min:20,max:100},
+ soil:{n:'토양수분',u:'%',v:48,lo:35,hi:80,rng:'적정 40~70%',d:0,min:5,max:100},
+ lux:{n:'조도',u:'lux',v:18000,lo:8000,hi:60000,rng:'적정 10,000 lux 이상',d:0,min:0,max:70000}};
+const keys=Object.keys(S);
+const hist={};keys.forEach(k=>{hist[k]=Array.from({length:30},(_,i)=>S[k].v+(Math.random()-.5)*(S[k].max-S[k].min)*.03)});
+const dev={fan:{n:'환기팬',on:false},pump:{n:'워터펌프',on:false},light:{n:'보조 조명',on:false}};
+let auto=true,ev=[],unread=0,view='register',tab='home',sel='temp',range='1시간',saved=[],connected=false,lastRx=null,net=true,alarm={};
+const $=s=>document.querySelector(s);
+const fmt=(k,v)=>k==='lux'?Math.round(v).toLocaleString():v.toFixed(S[k].d);
+function st(k){if(!net)return'off';const s=S[k];if(s.v>s.hi||s.v<s.lo)return'bad';const m=(s.hi-s.lo)*.1;if(s.v>s.hi-m||s.v<s.lo+m)return'warn';return'ok'}
+const lab={ok:'정상',warn:'주의',bad:'경보',off:'통신 두절'};
+const why=k=>{const s=S[k];return s.v>s.hi?`${s.n}이(가) 상한 ${fmt(k,s.hi)}${s.u}을 넘었어요`:s.v<s.lo?`${s.n}이(가) 하한 ${fmt(k,s.lo)}${s.u} 아래예요`:'기준 범위 안에 있어요'};
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2200)}
+function now(){return new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+function log(type,k,text){ev.unshift({type,k,text,t:now(),val:S[k]?fmt(k,S[k].v)+S[k].u:'',th:''});unread++;if(type==='경보')toast('🔔 '+text)}
+function tick(){
+ if(!connected||!net)return;
+ keys.forEach(k=>{const s=S[k];let d=(Math.random()-.5)*(s.max-s.min)*.012;
+  if(auto){if(k==='temp'&&dev.fan.on)d-=.5;if(k==='soil'&&dev.pump.on)d+=1.6;if(k==='lux'&&dev.light.on)d+=500}
+  if(k==='soil'&&!dev.pump.on)d-=.05;
+  s.v=Math.min(s.max,Math.max(s.min,s.v+d));hist[k].push(s.v);hist[k].shift();
+  const bad=st(k)==='bad';
+  if(bad&&!alarm[k]){alarm[k]=1;log('경보',k,why(k));
+   if(auto){if(k==='temp'&&s.v>s.hi)dev.fan.on=true;if(k==='soil')dev.pump.on=true;if(k==='lux')dev.light.on=true}}
+  if(!bad&&alarm[k]){alarm[k]=0;log('복구',k,`${s.n} 정상 범위로 돌아왔어요`);if(k==='temp')dev.fan.on=false;if(k==='soil')dev.pump.on=false;if(k==='lux')dev.light.on=false}});
+ lastRx=now();render(true)}
+setInterval(tick,2000);
+
+function spark(k){const a=hist[k],s=S[k];const lo=Math.min(...a,s.lo),hi=Math.max(...a,s.hi),W=340,H=140;
+ const y=v=>H-8-((v-lo)/(hi-lo||1))*(H-16);const p=a.map((v,i)=>`${(i/(a.length-1))*W},${y(v)}`).join(' ');
+ return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${s.n} 추이 그래프"><line x1="0" x2="${W}" y1="${y(s.hi)}" y2="${y(s.hi)}" stroke="var(--r)" stroke-dasharray="5 4"/><line x1="0" x2="${W}" y1="${y(s.lo)}" y2="${y(s.lo)}" stroke="var(--w)" stroke-dasharray="5 4"/><polyline points="${p}" fill="none" stroke="var(--g)" stroke-width="3" stroke-linejoin="round"/></svg>`}
+
+function head(){const bad=keys.filter(k=>st(k)==='bad'),w=keys.filter(k=>st(k)==='warn');
+ if(!net)return{c:'off',t:'통신 두절',d:`마지막 수신 ${lastRx||'-'} · 온실과 연결되지 않았어요`};
+ if(bad.length)return{c:'bad',t:'경보 '+bad.length+'건',d:bad.map(k=>why(k)).join('. ')};
+ if(w.length)return{c:'warn',t:'주의',d:w.map(k=>S[k].n).join(', ')+' 값이 기준에 가까워요'};
+ return{c:'ok',t:'온실 정상',d:'모든 센서가 기준 범위 안에 있어요'}}
+
+const V={
+register(){return `<h1>온실 연결</h1><p class="sub" style="margin:4px 0 16px">감시할 온실(RMU)의 IP 주소를 입력하세요. 같은 네트워크에 연결되어 있어야 해요.</p>
+<label for="nm">온실 이름</label><input id="nm" type="text" value="방울토마토 1동">
+<label for="ip">RMU IP 주소</label><input id="ip" type="text" inputmode="decimal" value="192.168.0.50" oninput="chk()"><div id="ipm" class="sub" style="margin:-6px 0 10px"></div>
+<label for="cm">Read 커뮤니티</label><input id="cm" type="text" value="public">
+<button class="btn" onclick="conn()">연결 테스트</button><div id="cr" style="margin-top:12px"></div>
+${saved.length?'<h2 style="margin:18px 0 8px">등록된 온실</h2>'+saved.map(s=>`<div class="card row"><div><b>${s.nm}</b><div class="sub">${s.ip}</div></div><button class="btn ghost" style="width:auto" onclick="enter()">열기</button></div>`).join(''):''}`},
+home(){const h=head();return `<div class="top"><div><h1>방울토마토 1동</h1><div class="sub">마지막 수신 ${lastRx||'-'}</div></div><button class="back" onclick="view='register';render()">전환</button></div>
+<div class="status ${h.c}" role="status"><b>${h.c==='bad'?'⚠ ':h.c==='ok'?'✓ ':''}${h.t}</b><span style="font-size:14px">${h.d}</span></div>
+<div class="grid">${keys.map(k=>{const c=st(k);return `<button class="sc ${c}" onclick="sel='${k}';view='detail';render()"><div class="sub">${S[k].n}</div><div class="v">${fmt(k,S[k].v)}<span class="u"> ${S[k].u}</span></div><span class="badge ${c}">${c==='bad'?'⚠ ':''}${lab[c]}</span></button>`}).join('')}</div>
+<p class="sub" style="margin-top:12px">카드를 누르면 그래프와 적정 범위를 볼 수 있어요.</p>
+<button class="btn ghost" style="margin-top:12px" onclick="net=!net;toast(net?'통신이 복구되었어요':'통신 두절을 시뮬레이션합니다');render()">${net?'통신 두절 시뮬레이션':'통신 복구'}</button>`},
+detail(){const s=S[sel],c=st(sel);return `<button class="back" onclick="view='main';render()">‹ 홈으로</button>
+<h1>${s.n}</h1><div class="v" style="font-size:44px;font-weight:700">${fmt(sel,s.v)}<span class="u" style="font-size:18px;font-weight:400;color:var(--sub)"> ${s.u}</span></div>
+<span class="badge ${c}">${c==='bad'?'⚠ ':''}${lab[c]}</span><p class="sub" style="margin-top:6px">${s.rng} · ${why(sel)}</p>
+<div class="tabs" role="tablist">${['1시간','1일','1주'].map(r=>`<button class="${r===range?'on':''}" onclick="range='${r}';render()">${r}</button>`).join('')}</div>
+<div class="card">${spark(sel)}<div class="sub" style="margin-top:6px">점선: 위 빨강=상한 ${fmt(sel,s.hi)}, 아래 노랑=하한 ${fmt(sel,s.lo)}. 시연용으로 ${range} 구간도 최근 측정값을 보여줘요.</div></div>
+<div class="card row"><span>최소 / 최대</span><b>${fmt(sel,Math.min(...hist[sel]))} / ${fmt(sel,Math.max(...hist[sel]))} ${s.u}</b></div>`},
+alerts(){unread=0;return `<h1>알림</h1><p class="sub" style="margin:4px 0 12px">경보와 복구 기록이에요. 항목을 누르면 자세히 볼 수 있어요.</p>
+${ev.length?ev.map((e,i)=>`<button class="sc" style="margin-bottom:8px" onclick="detailEv(${i})"><div class="row"><b>${e.type==='경보'?'⚠':'✓'} ${S[e.k].n} ${e.type}</b><span class="sub">${e.t}</span></div><div class="sub">${e.text}</div></button>`).join(''):'<div class="card sub" style="text-align:center;padding:30px">최근 이상이 없어요.<br>센서 값이 기준을 벗어나면 여기에 표시돼요.</div>'}`},
+control(){return `<h1>제어</h1><p class="sub" style="margin:4px 0 12px">현장에 가지 않고 장치를 켜고 꺼요.</p>
+<div class="card row"><div><b>자동 모드</b><div class="sub">${auto?'센서 값에 따라 장치가 자동으로 켜져요':'직접 조작할 수 있어요'}</div></div><button class="tog" role="switch" aria-checked="${auto}" aria-label="자동 모드" onclick="auto=!auto;render()"></button></div>
+${Object.keys(dev).map(k=>`<div class="card row" style="${auto?'opacity:.55':''}"><div><b>${dev[k].n}</b><div class="sub">${auto?'자동 모드 중에는 잠겨 있어요':dev[k].on?'켜짐':'꺼짐'}</div></div><button class="tog" role="switch" aria-checked="${dev[k].on}" aria-label="${dev[k].n}" ${auto?'disabled':''} onclick="ask('${k}')"></button></div>`).join('')}`},
+settings(){return `<h1>설정</h1><p class="sub" style="margin:4px 0 12px">기준 범위를 벗어나면 경보가 울려요.</p>
+${keys.map(k=>`<div class="card"><b>${S[k].n}</b> <span class="sub">${S[k].rng}</span><div class="row" style="gap:10px"><div style="flex:1"><label for="lo${k}">하한 (${S[k].u})</label><input id="lo${k}" type="number" value="${S[k].lo}"></div><div style="flex:1"><label for="hi${k}">상한 (${S[k].u})</label><input id="hi${k}" type="number" value="${S[k].hi}"></div></div></div>`).join('')}
+<button class="btn" onclick="saveSet()">저장</button>
+<button class="btn ghost" style="margin-top:8px" onclick="location.reload()">기본값으로 복원</button>
+<div class="card" style="margin-top:14px"><b>시연 도우미</b><div class="sub" style="margin-bottom:8px">발표 때 경보 상황을 바로 보여줄 수 있어요.</div>
+<button class="btn ghost" onclick="S.temp.v=S.temp.hi+3;toast('온도를 높였어요')">온도 급상승</button>
+<button class="btn ghost" style="margin-top:8px" onclick="S.soil.v=S.soil.lo-8;toast('토양수분을 낮췄어요')">토양 건조</button></div>`}};
+function saveSet(){let err='';keys.forEach(k=>{const l=+$('#lo'+k).value,h=+$('#hi'+k).value;if(l>=h)err=S[k].n+': 하한이 상한보다 작아야 해요';});
+ if(err)return toast(err);keys.forEach(k=>{S[k].lo=+$('#lo'+k).value;S[k].hi=+$('#hi'+k).value});toast('저장했어요')}
+function ask(k){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="card"><h2>${dev[k].n} ${dev[k].on?'끄기':'켜기'}</h2><p class="sub" style="margin:6px 0 14px">${k==='pump'&&!dev[k].on?'물이 공급돼요. 작물 상태를 확인했나요?':'명령을 RMU로 보낼게요.'}</p><button class="btn" id="y">확인</button><button class="btn ghost" style="margin-top:8px" id="n">취소</button></div>`;
+ document.body.append(m);$('#n').onclick=()=>m.remove();$('#y').onclick=()=>{m.remove();dev[k].on=!dev[k].on;toast(dev[k].n+(dev[k].on?' 켜짐':' 꺼짐'));render()}}
+function detailEv(i){const e=ev[i],m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="card"><h2>${S[e.k].n} ${e.type}</h2><p style="margin:8px 0">${e.text}</p><p class="sub">발생 시각 ${e.t}<br>당시 값 ${e.val}<br>기준 ${fmt(e.k,S[e.k].lo)} ~ ${fmt(e.k,S[e.k].hi)} ${S[e.k].u}</p><button class="btn" style="margin-top:12px" id="c">닫기</button></div>`;document.body.append(m);$('#c').onclick=()=>m.remove()}
+function chk(){const v=$('#ip').value,ok=/^(\d{1,3}\.){3}\d{1,3}$/.test(v);$('#ipm').textContent=ok?'':'IP 형식이 올바르지 않아요 (예: 192.168.0.50)'}
+function conn(){const v=$('#ip').value;if(!/^(\d{1,3}\.){3}\d{1,3}$/.test(v)){$('#cr').innerHTML='<div class="status bad">IP 주소를 확인하세요. 같은 네트워크의 주소여야 해요.</div>';return}
+ $('#cr').innerHTML='<div class="status off">연결 확인 중…</div>';
+ setTimeout(()=>{saved=[{nm:$('#nm').value,ip:v}];$('#cr').innerHTML='<div class="status ok"><b>✓ 연결 성공</b>RMU 응답을 확인했어요.</div><button class="btn" onclick="enter()">온실 열기</button>'},900)}
+function enter(){connected=true;lastRx=now();view='main';tab='home';render()}
+function render(soft){
+ if(soft&&document.querySelector('.modal'))return;
+ if(soft&&(view==='register'||tab==='settings'||(tab==='control'&&view==='main')&&false))return;
+ if(soft&&tab==='settings')return;
+ const m=$('#main'),y=m.scrollTop;
+ let h;if(view==='register')h=V.register();else if(view==='detail')h=V.detail();else h=V[tab]();
+ m.innerHTML=h;m.scrollTop=y;
+ const n=$('#nav');if(view==='register'){n.innerHTML='';return}
+ n.innerHTML=[['home','🌱','홈'],['alerts','🔔','알림'],['control','🎛','제어'],['settings','⚙','설정']].map(([t,i,l])=>`<button class="${tab===t&&view!=='detail'||(view==='detail'&&t==='home')?'on':''}" onclick="tab='${t}';view='main';render()"><i>${i}</i>${l}${t==='alerts'&&unread?` <span class="dot"></span>`:''}</button>`).join('')}
+render();
+</script></body></html>
