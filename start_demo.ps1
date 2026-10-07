@@ -19,11 +19,21 @@ if (-not $py) {
 }
 if (-not $py) { Write-Host "Python을 찾을 수 없습니다. Python을 설치하세요." -ForegroundColor Red; Read-Host; exit 1 }
 
-# 웹 앱이 빌드되어 있지 않으면 빌드
+# 웹 앱: 직접 빌드한 app\build\web이 있으면 그것을, 없으면 저장소에 들어 있는 release\web을 쓴다
+# (release\web 덕분에 Flutter가 없는 PC에서도 Python만 있으면 실행된다)
 $web = Join-Path $root "app\build\web"
 if (-not (Test-Path (Join-Path $web "index.html"))) {
-    Write-Host "웹 앱을 빌드합니다 (처음 한 번, 1분 정도)..."
-    Push-Location (Join-Path $root "app"); flutter build web; Pop-Location
+    $web = Join-Path $root "release\web"
+}
+if (-not (Test-Path (Join-Path $web "index.html"))) {
+    if (Get-Command flutter -ErrorAction SilentlyContinue) {
+        Write-Host "웹 앱을 빌드합니다 (처음 한 번, 1분 정도)..."
+        Push-Location (Join-Path $root "app"); flutter build web; Pop-Location
+        $web = Join-Path $root "app\build\web"
+    } else {
+        Write-Host "웹 앱 파일이 없습니다. RMU만 실행합니다 (폰 APK로 접속하세요)." -ForegroundColor Yellow
+        $web = $null
+    }
 }
 
 # 이미 켜져 있는 포트는 건너뛴다
@@ -35,7 +45,7 @@ foreach ($p in @(@{port=8080; name="방울토마토 1동"}, @{port=8081; name="�
     $procs += Start-Process -PassThru -WindowStyle Minimized -FilePath $py `
         -ArgumentList @("-u", "rmu\server.py", "--port", $p.port, "--farm-name", "`"$($p.name)`"")
 }
-if (-not (PortBusy 5000)) {
+if ($web -and -not (PortBusy 5000)) {
     $procs += Start-Process -PassThru -WindowStyle Minimized -FilePath $py `
         -ArgumentList @("-m", "http.server", "5000", "--bind", "0.0.0.0", "-d", "`"$web`"")
 }
