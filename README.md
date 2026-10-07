@@ -28,6 +28,11 @@ cd app && flutter test
 
 ## 안드로이드 APK
 
+바로 설치: `release/smartfarm-rmu-arm64.apk` (대부분의 폰), 아주 오래된 폰은 `release/smartfarm-rmu-armv7.apk`.
+안드로이드 7.0 이상. 설치할 때 "출처를 알 수 없는 앱" 허용이 필요합니다.
+
+직접 빌드:
+
 ```
 cd app
 flutter build apk --release
