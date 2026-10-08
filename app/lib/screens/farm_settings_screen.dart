@@ -54,7 +54,7 @@ class FarmListScreen extends StatelessWidget {
                 title: const Text('예시 농장 추가 (개발용)'),
                 subtitle: Text(
                   kIsWeb
-                      ? '모의 RMU ${Uri.base.host}:8080, 8081'
+                      ? '모의 RMU ${_pageHost()}:8080, 8081'
                       : '모의 RMU를 실행 중인 PC의 IP를 입력합니다',
                 ),
                 onTap: () => _addMockFarms(context),
@@ -70,7 +70,7 @@ class FarmListScreen extends StatelessWidget {
   /// 앱(APK): PC의 IP를 물어본다
   Future<void> _addMockFarms(BuildContext context) async {
     if (kIsWeb) {
-      await store.addMockFarms(Uri.base.host);
+      await store.addMockFarms(_pageHost());
       return;
     }
     final controller = TextEditingController(text: '192.168.');
@@ -110,6 +110,10 @@ class FarmListScreen extends StatelessWidget {
     );
   }
 }
+
+/// 웹에서 지금 열린 페이지의 PC 주소. HTML 파일을 직접 열면(file://) 주소가 없으므로
+/// 같은 PC의 RMU(시작하기.bat)를 뜻하는 localhost를 쓴다.
+String _pageHost() => Uri.base.host.isEmpty ? 'localhost' : Uri.base.host;
 
 /// 연결 실패 원인을 사람이 알아볼 수 있게 설명한다
 String connectionFailureHint(Object e) {
