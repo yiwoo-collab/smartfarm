@@ -83,6 +83,13 @@ class _EmptyHome extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+              // RMU 서버 없이 앱 안의 모의 RMU로 바로 체험
+              OutlinedButton.icon(
+                icon: const Icon(Icons.play_circle),
+                label: const Text('데모 농장으로 바로 체험'),
+                onPressed: () => AppServices.of(context).farms.addDemoFarms(),
+              ),
             ],
           ),
         ),

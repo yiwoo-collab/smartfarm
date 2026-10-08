@@ -9,12 +9,18 @@ import 'services/app_settings.dart';
 import 'services/farm_monitor.dart';
 import 'services/farm_store.dart';
 import 'services/system_notifier.dart';
+import 'web_font.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await loadWebKoreanFont(); // 웹 버전만: 한글 글꼴
   final settings = AppSettings();
   final farms = FarmStore();
   await Future.wait([settings.load(), farms.load()]); // 폰에 저장한 설정·농장 목록
+  // 체험용 빌드(--dart-define=DEMO=true): 처음 열면 데모 농장을 바로 보여준다
+  if (const bool.fromEnvironment('DEMO') && farms.farms.isEmpty) {
+    await farms.addDemoFarms();
+  }
   final alerts = AlertCenter(settings);
   final monitors = MonitorHub(farms, alerts: alerts);
 
@@ -47,10 +53,14 @@ class SmartFarmApp extends StatelessWidget {
       listenable: settings,
       builder: (context, _) => MaterialApp(
         title: '스마트팜 RMU',
-        theme: ThemeData(colorSchemeSeed: Colors.green),
+        theme: ThemeData(
+          colorSchemeSeed: Colors.green,
+          fontFamily: webFontFamily,
+        ),
         darkTheme: ThemeData(
           colorSchemeSeed: Colors.green,
           brightness: Brightness.dark,
+          fontFamily: webFontFamily,
         ),
         themeMode: settings.themeMode, // 라이트 / 다크 2가지
         // PC 브라우저에서도 마우스로 끌어서 농장을 넘길 수 있게 한다 (폰은 원래 터치로 동작)

@@ -267,4 +267,5 @@ smartfarm/
 - 시연: `시작하기.bat` 더블클릭 → 모의 RMU 2대 + 웹 앱. 확인 순서는 `확인_체크리스트.md`.
 - 안드로이드: `app` 폴더에서 `flutter build apk --release` → `app/build/app/outputs/flutter-apk/app-release.apk` (Android SDK: `C:\Android\sdk`, JDK 17)
 - 작물별 임계값 기본값: `rmu/crops.json` (GET /api/crops). 앱의 임계값 화면에서 불러온다.
+- 데모 모드: 농장 주소가 `demo:1`, `demo:2`이면 앱이 HTTP 대신 `app/lib/demo/demo_rmu.dart`(앱 안 모의 RMU)를 쓴다. `rmu/rmu_model.py` 규칙을 Dart로 옮긴 것이라, 규칙을 바꾸면 두 파일을 같이 고친다. `--dart-define=DEMO=true`로 빌드하면 처음 열 때 데모 농장이 자동으로 추가된다 (바로 보기 웹 페이지용). 웹 버전은 `app/web/fonts`의 Noto Sans KR을 직접 불러온다.
 - 기록 DB: `rmu/data/rmu_<포트>.db` (SQLite, `--db`로 변경, `--no-db`로 끔).

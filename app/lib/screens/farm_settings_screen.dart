@@ -44,6 +44,12 @@ class FarmListScreen extends StatelessWidget {
                 ),
               const Divider(),
               ListTile(
+                leading: const Icon(Icons.play_circle),
+                title: const Text('데모 농장 추가 (서버 없이 체험)'),
+                subtitle: const Text('앱 안의 모의 RMU로 시나리오 1~22를 바로 확인'),
+                onTap: store.addDemoFarms,
+              ),
+              ListTile(
                 leading: const Icon(Icons.science),
                 title: const Text('예시 농장 추가 (개발용)'),
                 subtitle: Text(

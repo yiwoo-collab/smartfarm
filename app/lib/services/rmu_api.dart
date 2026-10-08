@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../demo/demo_rmu.dart';
 import '../models/rmu_status.dart';
 
 /// RMU가 돌려준 오류 (401 로그인 필요, 409 자동 모드 잠금 등)
@@ -37,6 +38,7 @@ class RmuApi {
     String path, [
     Object? body,
   ]) async {
+    if (DemoRmu.isDemoUrl(baseUrl)) return _sendDemo(method, path, body);
     final uri = Uri.parse('$baseUrl$path');
     final encoded = body == null ? null : jsonEncode(body);
     final res = await switch (method) {
@@ -55,6 +57,23 @@ class RmuApi {
       );
     }
     return json;
+  }
+
+  /// 데모 모드: 앱 안의 모의 RMU가 응답한다 (서버·네트워크 없이 체험)
+  Future<Map<String, dynamic>> _sendDemo(
+    String method,
+    String path,
+    Object? body,
+  ) async {
+    final demo = DemoRmu.forAddress(baseUrl.substring('http://'.length));
+    try {
+      final result = demo.handle(method, path, body, token);
+      // 실제 HTTP와 같은 모양(숫자 타입 등)이 되도록 JSON으로 한 번 바꿨다가 읽는다
+      return jsonDecode(jsonEncode(result)) as Map<String, dynamic>;
+    } on DemoRmuError catch (e) {
+      if (e.statusCode == 401) token = null;
+      throw ApiException(e.statusCode, e.message);
+    }
   }
 
   Future<RmuStatus> fetchStatus() async =>

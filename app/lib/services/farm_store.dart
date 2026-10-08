@@ -43,6 +43,21 @@ class FarmStore extends ChangeNotifier {
     );
   }
 
+  /// 서버 없이 체험: 앱 안의 데모 RMU(demo:1, demo:2)에 연결한 농장을 넣는다.
+  Future<void> addDemoFarms() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _save([
+      ..._farms,
+      Farm(
+        id: '$now-d1',
+        name: '방울토마토 1동 (데모)',
+        crop: '방울토마토',
+        rmuAddress: 'demo:1',
+      ),
+      Farm(id: '$now-d2', name: '상추 2동 (데모)', crop: '상추', rmuAddress: 'demo:2'),
+    ]);
+  }
+
   /// 개발용: 모의 RMU 두 개(8080, 8081)에 연결한 예시 농장을 넣는다.
   /// host: 모의 RMU가 돌고 있는 PC 주소 (PC 브라우저는 localhost, 폰은 PC의 IP)
   Future<void> addMockFarms([String host = 'localhost']) async {
