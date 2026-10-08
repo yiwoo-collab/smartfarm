@@ -28,6 +28,10 @@ PC·와이파이 연결 없이 폰 하나로 시나리오 1~22를 확인할 수 
 | `rmu/` | RMU 서버 (PC에서는 모의, 라즈베리파이에서는 `--hardware`로 실물). 설치: `rmu/SETUP_PI.md` |
 | `app/` | Flutter 앱 (웹·안드로이드) |
 | `oids.json` | 이름 ↔ OID (유일한 OID 정의 위치) |
+| `v3/` | 실제 앱을 HTML 파일 하나로 묶은 체험판 |
+| `스마트팜 v1/` | 첫 화면 시안 (smartfarm-app, smartfarm-web HTML) |
+| `스마트팜 v1.1/` | 피드백 반영 앱 시안 v2 HTML |
+| `스마트팜 v1.2/` | 기획 문서: 모바일 앱 변경 및 시나리오 구상 (한글 .hwp) |
 | `SMARTFARM-MIB.mib` | `python rmu/gen_mib.py`로 생성 |
 
 ## 테스트
