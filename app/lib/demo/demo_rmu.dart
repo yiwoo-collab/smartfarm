@@ -1534,7 +1534,8 @@ class DemoRmu {
       case ('POST', '/api/login'):
         if (data['username'] == _demoAdmin['username'] &&
             data['password'] == _demoAdmin['password']) {
-          final token = 'demo-${_rand.nextInt(1 << 32)}';
+          // 웹에서는 1 << 32 가 0이 되므로(32비트 계산) 그보다 작은 범위를 쓴다
+          final token = 'demo-${_rand.nextInt(1000000000)}';
           _tokens.add(token);
           return {'token': token};
         }

@@ -73,6 +73,9 @@ class RmuApi {
     } on DemoRmuError catch (e) {
       if (e.statusCode == 401) token = null;
       throw ApiException(e.statusCode, e.message);
+    } catch (e) {
+      // 데모 RMU 코드 자체의 오류: "연결할 수 없음"으로 숨기지 않고 내용을 보여준다
+      throw ApiException(500, '데모 RMU 오류: $e');
     }
   }
 
