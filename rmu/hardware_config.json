@@ -1,23 +1,32 @@
 {
-  "_comment": "라즈베리파이 배선 설정 (제안 값). 실제 배선에 맞게 바꾸세요. 핀 번호는 BCM 번호입니다. 장치를 연결하지 않았으면 enabled를 false로 두면 시뮬레이션 값을 씁니다.",
+  "_comment": "라즈베리파이 직결 감지기·릴레이 설정 (제안 값, CLAUDE.md 9장). 실제 배선과 출력 형식이 정해지면 바꾸세요. 핀 번호는 BCM. enabled가 false인 항목은 읽지 않습니다 (데모 모드는 항상 시뮬레이션).",
 
-  "bme280":  { "enabled": true, "address": "0x76" },
-  "ads1115": {
-    "enabled": true, "address": "0x48", "soil_channel": 0,
-    "_comment": "토양수분 보정: 공기 중(마른 상태) raw 값과 물에 담갔을 때 raw 값. 센서마다 측정해서 바꾸세요.",
-    "soil_dry_raw": 26000, "soil_wet_raw": 12000
+  "humidity_sensor": {
+    "_comment": "온습도감지기. type: bme280 (I2C) 또는 dht22 (GPIO). 연결 방식 확인 필요.",
+    "enabled": true, "type": "bme280", "address": "0x76", "pin": 4
   },
-  "ina219":  { "enabled": true, "address": "0x40" },
+
+  "fire_sensor": {
+    "_comment": "화재감지기 접점 출력 (제안). active_low가 true면 LOW일 때 화재.",
+    "enabled": true, "pin": 5, "active_low": true
+  },
+
+  "water_level": {
+    "_comment": "수위감지기. mode: digital (플로트 스위치: 물이 있으면 100, 없으면 0) 또는 analog (ADS1115로 0~100% 환산). 출력 형식·의미 확인 필요.",
+    "enabled": true, "mode": "digital", "pin": 6, "active_low": false,
+    "ads1115_address": "0x48", "channel": 0, "empty_raw": 2000, "full_raw": 26000
+  },
+
   "cpu_temp_path": "/sys/class/thermal/thermal_zone0/temp",
 
   "relays": {
-    "_comment": "릴레이 모듈이 LOW에서 켜지는 타입이면 active_low를 true로.",
+    "_comment": "릴레이 모듈이 LOW에서 켜지면 active_low true. 팬·펌프는 외부 전원.",
     "active_low": true,
     "pins": { "main_fan": 17, "backup_fan": 27, "cooling_fan": 22, "pump": 23 }
   },
 
   "fan_tach": {
-    "_comment": "팬 회전 신호(타코) 핀. 3선/4선 팬만 해당. null이면 회전 감지를 하지 않습니다 (CLAUDE.md 7장 고장 판정 제안).",
+    "_comment": "팬 회전 신호 핀 (3선/4선 팬만). null이면 회전 감지 안 함.",
     "pins": { "main_fan": null, "backup_fan": null },
     "timeout_seconds": 3
   }

@@ -1,13 +1,13 @@
 """
 SNMP 에이전트 (net-snmp snmpd의 pass_persist 확장).
 
-snmpd가 이 스크립트를 띄워 두고, 우리 OID(.1.3.6.1.4.1.99999.1) 아래의 요청을 넘겨준다.
+snmpd가 이 스크립트를 띄워 두고, 우리 확장 OID(.1.3.6.1.4.1.61123730.1.6 = {rmu 6}) 아래의 요청을 넘겨준다.
   - GET / GETNEXT : 같은 라즈베리파이의 REST API(/api/status, /api/thresholds, /api/settings)에서 값을 읽어 응답
   - SET           : REST API(/api/control, /api/thresholds, /api/settings)로 전달
                     → 앱과 똑같은 규칙(자동 모드 잠금, 값 검사)을 거친다
 값을 한 곳(server.py의 RmuModel)에서만 관리하기 위해 이렇게 나눴다.
 
-snmpd.conf 예:  pass_persist .1.3.6.1.4.1.99999.1 /usr/bin/python3 /home/pi/smartfarm/rmu/snmp_agent.py
+snmpd.conf 예:  pass_persist .1.3.6.1.4.1.61123730.1.6 /usr/bin/python3 /home/pi/smartfarm/rmu/snmp_agent.py
 
 pass_persist 규칙 (net-snmp snmpd.conf 문서):
   PING                 → PONG
@@ -63,10 +63,11 @@ class Agent:
     def __init__(self, client, oids=None):
         self.client = client
         self.oids = oids or oidlib.load()
-        # 인스턴스 OID(.0을 붙임) → (이름, 그룹, 단위)
+        # 인스턴스 OID(.0을 붙임) → 항목 (우리 확장 {rmu 6}, 라즈베리파이 값만)
         self.table = {}
-        for name, group, oid, unit, _ in oidlib.objects(self.oids):
-            self.table[oid + ".0"] = (name, group, unit)
+        for obj in oidlib.objects(self.oids, source="pi"):
+            if obj["group"] in ("status", *oidlib.WRITABLE_GROUPS) and obj.get("available", True):
+                self.table[obj["oid"].strip(".") + ".0"] = obj
         self.sorted_oids = sorted(self.table, key=oidlib.oid_key)
         self._cache = None
         self._cache_time = 0.0
@@ -84,6 +85,8 @@ class Agent:
         flat.update(status["power"])
         flat.update(status["control"])
         flat["alarm_level"] = status["alarm_level"]
+        flat["alarm_code"] = status.get("alarm_code", 0)
+        flat["ai_mode"] = 1 if status.get("mode") == "live" else 0
         flat.update(self.client.get("/api/thresholds"))
         flat.update(self.client.get("/api/settings"))
         self._cache, self._cache_time = flat, now
@@ -91,11 +94,11 @@ class Agent:
 
     def value_of(self, oid):
         """(type, value) 또는 None. 센서 오류(null)는 값이 없으므로 None."""
-        name, _, unit = self.table[oid]
-        value = self._snapshot().get(name)
-        if value is None:
+        obj = self.table[oid]
+        value = self._snapshot().get(obj["name"])
+        if value is None:  # 정보없음·센서 오류
             return None
-        return "integer", oidlib.to_snmp(value, unit)
+        return "integer", oidlib.to_raw(value, obj)
 
     def get(self, oid):
         if oid not in self.table:
@@ -116,7 +119,8 @@ class Agent:
     def set(self, oid, type_and_value):
         if oid not in self.table:
             return "not-writable"
-        name, group, unit = self.table[oid]
+        obj = self.table[oid]
+        name, group = obj["name"], obj["group"]
         if group not in oidlib.WRITABLE_GROUPS:
             return "not-writable"
         parts = type_and_value.split(None, 1)
@@ -126,9 +130,11 @@ class Agent:
             raw = int(parts[1])
         except ValueError:
             return "wrong-type"
-        value = oidlib.from_snmp(raw, unit)
+        value = oidlib.to_value(raw, obj)
 
-        if group == "control":
+        if name == "ai_mode":
+            error = self.client.send("PUT", "/api/mode", {"mode": "live" if raw else "demo"})
+        elif group == "control":
             error = self.client.send("POST", "/api/control", {"device": name, "value": value})
         elif group == "thresholds":
             error = self.client.send("PUT", "/api/thresholds", {name: value})

@@ -52,7 +52,7 @@ class SmartFarmApp extends StatelessWidget {
     return ListenableBuilder(
       listenable: settings,
       builder: (context, _) => MaterialApp(
-        title: '스마트팜 RMU',
+        title: '스마트팜 v3.0',
         theme: ThemeData(
           colorSchemeSeed: Colors.green,
           fontFamily: webFontFamily,

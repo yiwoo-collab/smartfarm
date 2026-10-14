@@ -52,7 +52,7 @@ class _ControlScreenState extends State<ControlScreen> {
         await ensureLoggedIn(context, monitor); // 토큰 만료 → 다시 로그인
       }
     } catch (_) {
-      _showMessage('RMU에 연결할 수 없습니다');
+      _showMessage('라즈베리파이에 연결할 수 없습니다');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -90,7 +90,7 @@ class _ControlScreenState extends State<ControlScreen> {
             ],
           ),
           body: status == null
-              ? const Center(child: Text('RMU 상태를 받지 못했습니다'))
+              ? const Center(child: Text('농장 상태를 받지 못했습니다'))
               : _buildBody(status, !monitor.connected),
         );
       },
@@ -117,7 +117,7 @@ class _ControlScreenState extends State<ControlScreen> {
             title: const Text('자동 제어'),
             subtitle: Text(
               auto
-                  ? '알람에 따라 RMU가 장치를 자동으로 조작합니다. 수동 조작은 잠겨 있습니다.'
+                  ? '알람에 따라 라즈베리파이가 장치를 자동으로 조작합니다. 수동 조작은 잠겨 있습니다.'
                   : '수동 모드: 자동 조치를 하지 않습니다. 장치를 직접 조작하세요.',
             ),
             value: auto,

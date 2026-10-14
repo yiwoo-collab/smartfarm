@@ -1,17 +1,15 @@
 """
-라즈베리파이 하드웨어 (1단계 실물).
+라즈베리파이 직결 감지기·릴레이 (CLAUDE.md 1·9장, v3.0).
 
-실물 (CLAUDE.md 9장)
-  - 온습도 BME280 (I2C)
-  - 토양수분 + ADS1115 (I2C)
-  - 공급 전압·전류 INA219 (I2C)
-  - RMU 온도: CPU 온도 파일
+  - 온습도감지기 (BME280 I2C 또는 DHT22)  → humidity, hum_temp
+  - 화재감지기 (접점 출력, GPIO)          → fire (0/1)
+  - 수위감지기 (플로트 스위치 또는 ADS1115) → water_level (%)
+  - 라즈베리파이 CPU 온도                  → pi_temp
   - 릴레이: 메인/예비 환풍기, 쿨링팬, 펌프 (외부 전원)
-  - (선택) 팬 회전 신호로 고장 감지
+  - (선택) 팬 회전 신호
 
-라이브러리가 없거나 센서가 응답하지 않으면 그 항목은 None을 돌려준다.
-None인 센서는 RmuModel이 '센서 오류'로 표시한다 (시나리오 13).
-PC에서는 라이브러리가 없어서 모든 항목이 '없음'으로 시작한다.
+온도(temp1)·전원(acv1)은 RMU 실물에서 SNMP로 읽는다 (rmu_client.py).
+라이브러리가 없거나 장치가 응답하지 않으면 그 항목은 None → '센서 오류'로 표시된다.
 """
 
 import json
@@ -20,8 +18,8 @@ import time
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "hardware_config.json")
 
-# 실물 센서가 공급하는 값 이름 (rmu_model.values의 키와 같음)
-REAL_SENSORS = ["temperature", "humidity", "soil_moisture", "supply_voltage", "supply_current", "rmu_temp"]
+# 라즈베리파이가 직접 읽는 값 이름
+PI_SENSORS = ["humidity", "hum_temp", "fire", "water_level", "pi_temp"]
 
 
 def _addr(text):
@@ -32,17 +30,16 @@ class Hardware:
     def __init__(self, config_path=CONFIG_PATH):
         with open(config_path, encoding="utf-8") as f:
             self.cfg = json.load(f)
-        self.available = {}   # 장치 이름 → 연결 성공 여부 (시작할 때 출력)
+        self.available = {}
         self._i2c = None
-        self._bme = self._ads_chan = self._ina = None
+        self._bme = self._dht = self._fire = self._water = self._water_adc = None
         self._relays = {}
-        self._tach = {}       # 팬 이름 → [마지막 회전 신호 시각]
+        self._tach = {}
         self._fan_on_since = {}
-        self._init_i2c_devices()
+        self._init_sensors()
         self._init_relays()
         self._init_tach()
 
-    # ----- 초기화 ------------------------------------------------------------
     def _get_i2c(self):
         if self._i2c is None:
             import board
@@ -51,36 +48,53 @@ class Hardware:
         return self._i2c
 
     def _try(self, name, func):
-        """장치 초기화. 실패해도 멈추지 않고 '없음'으로 기록한다."""
         try:
             result = func()
             self.available[name] = True
             return result
-        except Exception as e:  # 라이브러리 없음, 배선 문제 등
+        except Exception as e:
             self.available[name] = False
             print(f"[hardware] {name} 사용 안 함: {type(e).__name__}: {e}")
             return None
 
-    def _init_i2c_devices(self):
+    def _init_sensors(self):
         c = self.cfg
-        if c["bme280"]["enabled"]:
-            def bme():
-                from adafruit_bme280 import basic as adafruit_bme280
-                return adafruit_bme280.Adafruit_BME280_I2C(self._get_i2c(), address=_addr(c["bme280"]["address"]))
-            self._bme = self._try("bme280", bme)
-        if c["ads1115"]["enabled"]:
-            def ads():
-                import adafruit_ads1x15.ads1115 as ADS
-                from adafruit_ads1x15.analog_in import AnalogIn
-                dev = ADS.ADS1115(self._get_i2c(), address=_addr(c["ads1115"]["address"]))
-                pin = [ADS.P0, ADS.P1, ADS.P2, ADS.P3][c["ads1115"]["soil_channel"]]
-                return AnalogIn(dev, pin)
-            self._ads_chan = self._try("ads1115", ads)
-        if c["ina219"]["enabled"]:
-            def ina():
-                from adafruit_ina219 import INA219
-                return INA219(self._get_i2c(), addr=_addr(c["ina219"]["address"]))
-            self._ina = self._try("ina219", ina)
+        hs = c["humidity_sensor"]
+        if hs["enabled"]:
+            if hs["type"] == "bme280":
+                def bme():
+                    from adafruit_bme280 import basic as adafruit_bme280
+                    return adafruit_bme280.Adafruit_BME280_I2C(self._get_i2c(), address=_addr(hs["address"]))
+                self._bme = self._try("humidity:bme280", bme)
+            else:
+                def dht():
+                    import adafruit_dht
+                    import board
+                    return adafruit_dht.DHT22(getattr(board, f"D{hs['pin']}"))
+                self._dht = self._try("humidity:dht22", dht)
+
+        fs = c["fire_sensor"]
+        if fs["enabled"]:
+            def fire():
+                from gpiozero import DigitalInputDevice
+                return DigitalInputDevice(fs["pin"], pull_up=fs["active_low"])
+            self._fire = self._try("fire", fire)
+
+        ws = c["water_level"]
+        if ws["enabled"]:
+            if ws["mode"] == "analog":
+                def adc():
+                    import adafruit_ads1x15.ads1115 as ADS
+                    from adafruit_ads1x15.analog_in import AnalogIn
+                    dev = ADS.ADS1115(self._get_i2c(), address=_addr(ws["ads1115_address"]))
+                    return AnalogIn(dev, [ADS.P0, ADS.P1, ADS.P2, ADS.P3][ws["channel"]])
+                self._water_adc = self._try("water_level:analog", adc)
+            else:
+                def switch():
+                    from gpiozero import DigitalInputDevice
+                    return DigitalInputDevice(ws["pin"], pull_up=ws["active_low"])
+                self._water = self._try("water_level:digital", switch)
+
         self.available["cpu_temp"] = os.path.exists(c["cpu_temp_path"])
 
     def _init_relays(self):
@@ -105,23 +119,7 @@ class Hardware:
                 return dev
             self._try(f"tach:{fan}", make)
 
-    # ----- 읽기 --------------------------------------------------------------
-    def read(self):
-        """센서 값 읽기. {이름: 값 또는 None}. None = 읽기 실패(센서 오류)."""
-        values = {}
-        if self.available.get("bme280"):
-            values["temperature"] = self._safe(lambda: self._bme.temperature)
-            values["humidity"] = self._safe(lambda: self._bme.relative_humidity)
-        if self.available.get("ads1115"):
-            values["soil_moisture"] = self._safe(self._read_soil)
-        if self.available.get("ina219"):
-            # 공급 전압 = 버스 전압 + 션트 전압
-            values["supply_voltage"] = self._safe(lambda: self._ina.bus_voltage + self._ina.shunt_voltage / 1000)
-            values["supply_current"] = self._safe(lambda: max(0.0, self._ina.current / 1000))
-        if self.available.get("cpu_temp"):
-            values["rmu_temp"] = self._safe(self._read_cpu_temp)
-        return values
-
+    # ----- 읽기 ----------------------------------------------------------------
     @staticmethod
     def _safe(func):
         try:
@@ -129,20 +127,35 @@ class Hardware:
         except Exception:
             return None
 
-    def _read_soil(self):
-        """ADS1115 raw 값 → 토양수분 % (마른 값 0%, 젖은 값 100%로 직선 보정)"""
-        c = self.cfg["ads1115"]
-        raw = self._ads_chan.value
-        pct = (c["soil_dry_raw"] - raw) / (c["soil_dry_raw"] - c["soil_wet_raw"]) * 100
+    def read(self):
+        """{이름: 값 또는 None}. 연결하지 않은(설정에서 끈) 항목은 빠진다."""
+        v = {}
+        if self._bme is not None:
+            v["humidity"] = self._safe(lambda: self._bme.relative_humidity)
+            v["hum_temp"] = self._safe(lambda: self._bme.temperature)
+        elif self._dht is not None:
+            v["humidity"] = self._safe(lambda: self._dht.humidity)
+            v["hum_temp"] = self._safe(lambda: self._dht.temperature)
+        if self._fire is not None:
+            v["fire"] = self._safe(lambda: 1 if self._fire.value else 0)
+        if self._water is not None:
+            v["water_level"] = self._safe(lambda: 100 if self._water.value else 0)
+        elif self._water_adc is not None:
+            v["water_level"] = self._safe(self._read_water_adc)
+        if self.available.get("cpu_temp"):
+            v["pi_temp"] = self._safe(self._read_cpu_temp)
+        return v
+
+    def _read_water_adc(self):
+        c = self.cfg["water_level"]
+        pct = (self._water_adc.value - c["empty_raw"]) / (c["full_raw"] - c["empty_raw"]) * 100
         return max(0.0, min(100.0, pct))
 
     def _read_cpu_temp(self):
         with open(self.cfg["cpu_temp_path"]) as f:
-            return int(f.read().strip()) / 1000  # 밀리도 → ℃
+            return int(f.read().strip()) / 1000
 
     def fan_failures(self, control):
-        """회전 신호로 팬 고장 판정. {팬: True(고장)/False}. 감지 핀이 없는 팬은 빠진다.
-        켜라는 명령 후 timeout 초 동안 회전 신호가 없으면 고장 (CLAUDE.md 7장 제안)."""
         timeout = self.cfg["fan_tach"]["timeout_seconds"]
         now = time.monotonic()
         result = {}
@@ -152,13 +165,11 @@ class Hardware:
                 result[fan] = False
                 continue
             on_since = self._fan_on_since.setdefault(fan, now)
-            started_long_ago = now - on_since >= timeout
-            result[fan] = started_long_ago and now - last[0] >= timeout
+            result[fan] = now - on_since >= timeout and now - last[0] >= timeout
         return result
 
-    # ----- 쓰기 --------------------------------------------------------------
+    # ----- 쓰기 ----------------------------------------------------------------
     def apply(self, control):
-        """장치 출력을 릴레이에 반영. 릴레이가 없는 장치(에어컨 등)는 시뮬레이션."""
         for device, relay in self._relays.items():
             try:
                 relay.value = bool(control.get(device))

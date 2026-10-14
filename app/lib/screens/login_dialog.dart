@@ -48,7 +48,7 @@ class _LoginDialogState extends State<_LoginDialog> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
-      setState(() => _error = 'RMU에 연결할 수 없습니다');
+      setState(() => _error = '라즈베리파이에 연결할 수 없습니다');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

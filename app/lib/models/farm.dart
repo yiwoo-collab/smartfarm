@@ -15,6 +15,9 @@ class Farm {
     this.community = 'public',
   });
 
+  /// 앱 안의 데모 RMU에 연결한 농장인지 (배지는 이름이 아니라 따로 붙인다)
+  bool get isDemo => rmuAddress.startsWith('demo:');
+
   /// REST API 기본 주소
   String get baseUrl => 'http://$rmuAddress';
 

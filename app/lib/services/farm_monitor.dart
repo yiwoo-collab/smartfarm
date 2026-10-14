@@ -58,7 +58,7 @@ class FarmMonitor extends ChangeNotifier {
           level: 0,
           type: 'comm',
           key: 'comm',
-          message: connected ? 'RMU와 다시 연결되었습니다' : 'RMU와 통신이 끊겼습니다',
+          message: connected ? '라즈베리파이와 다시 연결되었습니다' : '라즈베리파이와 통신이 끊겼습니다',
         ),
       ]);
     }

@@ -9,6 +9,8 @@ class AppSettings extends ChangeNotifier {
   Set<String> mutedFarms = {}; // 알림을 끈 농장 id (긴급 경보는 꺼도 받음)
   int minIntervalMinutes = 5; // 같은 알림을 다시 띄우지 않는 최소 간격 (제안)
   bool systemNotifications = false; // 휴대폰/브라우저 시스템 알림 (권한 허용 후 켜짐)
+  // 홈 좌우 스와이프로 농장 전환 (v3.0 제안: 끄고 농장 탭 줄만 사용. 팀 확정 전까지 선택 가능)
+  bool homeSwipe = false;
 
   ThemeMode get themeMode => darkMode ? ThemeMode.dark : ThemeMode.light;
 
@@ -19,6 +21,7 @@ class AppSettings extends ChangeNotifier {
     mutedFarms = (p.getStringList('muted_farms') ?? []).toSet();
     minIntervalMinutes = p.getInt('min_interval_minutes') ?? 5;
     systemNotifications = p.getBool('system_notifications') ?? false;
+    homeSwipe = p.getBool('home_swipe') ?? false;
     notifyListeners();
   }
 
@@ -30,6 +33,12 @@ class AppSettings extends ChangeNotifier {
     await p.setStringList('muted_farms', mutedFarms.toList());
     await p.setInt('min_interval_minutes', minIntervalMinutes);
     await p.setBool('system_notifications', systemNotifications);
+    await p.setBool('home_swipe', homeSwipe);
+  }
+
+  Future<void> setHomeSwipe(bool v) {
+    homeSwipe = v;
+    return _save();
   }
 
   Future<void> setSystemNotifications(bool v) {

@@ -21,6 +21,31 @@ String formatDateTime(DateTime t) => '${t.month}/${t.day} ${formatTime(t)}';
 String formatMinutes(int m) =>
     '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
 
+/// 숫자 표시. null이면 '-'
+String fmt(double? v, int digits, String unit) =>
+    v == null ? '-' : '${v.toStringAsFixed(digits)} $unit';
+
+/// 데모 모드 배지. 농장 이름의 일부가 아니라 따로 붙인다 (CLAUDE.md 3장)
+class DemoBadge extends StatelessWidget {
+  const DemoBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: scheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '데모',
+        style: TextStyle(fontSize: 11, color: scheme.onTertiaryContainer),
+      ),
+    );
+  }
+}
+
 /// 현재 알람 등급 카드. stale이면 회색 (통신 두절: 마지막 값)
 class AlarmCard extends StatelessWidget {
   final RmuStatus status;
@@ -32,6 +57,7 @@ class AlarmCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final level = status.alarmLevel.clamp(0, 3);
     final others = status.conditions.skip(1).toList();
+    final code = status.alarmCode > 0 ? ' · 코드 ${status.alarmCode}' : '';
     return Card(
       color: stale ? Colors.grey : levelColor(level),
       child: ListTile(
@@ -40,7 +66,7 @@ class AlarmCard extends StatelessWidget {
           color: Colors.white,
         ),
         title: Text(
-          '알람 등급: ${alarmLevelNames[level]}',
+          '알람 등급: ${alarmLevelNames[level]}$code',
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -60,15 +86,17 @@ class AlarmCard extends StatelessWidget {
   }
 }
 
-/// 이름 - 값 한 줄. stale이면 회색, error면 "센서 오류"
+/// 이름 - 값 한 줄.
+/// state: ok / nodata(정보없음) / fault(센서 오류) / offline(RMU 통신 두절, 회색)
+/// stale: 라즈베리파이와 통신 두절 (농장 전체, 회색)
 class ValueTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final Color? valueColor;
   final bool stale;
-  final bool error;
-  final VoidCallback? onTap; // 누르면 기록 그래프 등
+  final String state;
+  final VoidCallback? onTap;
 
   const ValueTile({
     super.key,
@@ -77,27 +105,29 @@ class ValueTile extends StatelessWidget {
     required this.value,
     this.valueColor,
     this.stale = false,
-    this.error = false,
+    this.state = 'ok',
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = stale
-        ? Colors.grey
-        : error
-        ? Colors.red
-        : valueColor;
+    final grey = stale || state == 'offline' || state == 'nodata';
+    final (text, color) = switch (state) {
+      'nodata' => ('정보없음', Colors.grey),
+      'fault' => ('센서 오류', Colors.red),
+      'offline' => ('$value (RMU 두절)', Colors.grey),
+      _ => (value, stale ? Colors.grey : valueColor),
+    };
     return Card(
       child: ListTile(
-        onTap: onTap,
-        leading: Icon(icon, color: stale ? Colors.grey : null),
-        title: Text(label, style: TextStyle(color: stale ? Colors.grey : null)),
+        onTap: state == 'nodata' ? null : onTap,
+        leading: Icon(icon, color: grey ? Colors.grey : null),
+        title: Text(label, style: TextStyle(color: grey ? Colors.grey : null)),
         trailing: Text(
-          error ? '센서 오류' : value,
+          text,
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontSize: state == 'nodata' ? 14 : 18,
+            fontWeight: state == 'nodata' ? null : FontWeight.bold,
             color: color,
           ),
         ),
@@ -105,7 +135,3 @@ class ValueTile extends StatelessWidget {
     );
   }
 }
-
-/// 숫자 표시. null이면 '-'
-String fmt(double? v, int digits, String unit) =>
-    v == null ? '-' : '${v.toStringAsFixed(digits)} $unit';

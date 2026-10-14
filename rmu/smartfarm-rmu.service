@@ -1,17 +1,17 @@
-# systemd 서비스: 라즈베리파이가 켜지면 RMU 서버를 자동 실행
+# systemd 서비스: 라즈베리파이가 켜지면 스마트팜 게이트웨이를 자동 실행
 # 적용: sudo cp smartfarm-rmu.service /etc/systemd/system/
 #       sudo systemctl daemon-reload && sudo systemctl enable --now smartfarm-rmu
 # 로그: journalctl -u smartfarm-rmu -f
 [Unit]
-Description=Smartfarm RMU (REST API, sensors, relays, SNMP traps)
+Description=Smartfarm gateway v3.0 (RMU SNMP polling/traps, Pi sensors, relays, REST API)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 User=pi
 WorkingDirectory=/opt/smartfarm/rmu
-# --trap-host: Trap을 받을 NMS 주소로 바꾸세요
-ExecStart=/opt/smartfarm/venv/bin/python server.py --hardware --trap-host 192.168.0.20
+# --rmu-host: RMU 실물 주소로 바꾸세요 (선택: --trap-host <NMS 주소> 로 우리 farmAlarm Trap도 전송)
+ExecStart=/opt/smartfarm/venv/bin/python server.py --hardware --rmu-host 192.168.0.10
 Restart=always
 RestartSec=3
 

@@ -75,7 +75,7 @@ class RmuApi {
       throw ApiException(e.statusCode, e.message);
     } catch (e) {
       // 데모 RMU 코드 자체의 오류: "연결할 수 없음"으로 숨기지 않고 내용을 보여준다
-      throw ApiException(500, '데모 RMU 오류: $e');
+      throw ApiException(500, '데모 게이트웨이 오류: $e');
     }
   }
 
@@ -137,6 +137,28 @@ class RmuApi {
 
   Future<Map<String, dynamic>> updateSettings(Map<String, int> changes) =>
       _send('PUT', '/api/settings', changes);
+
+  /// AI 모드: demo / live
+  Future<String> fetchMode() async =>
+      (await _send('GET', '/api/mode'))['mode'] as String;
+
+  Future<void> setMode(String mode) =>
+      _send('PUT', '/api/mode', {'mode': mode});
+
+  /// 실사용 모드 AI 제안 목록 (최신이 앞)
+  Future<List<Map<String, dynamic>>> fetchSuggestions() async {
+    final json = await _send('GET', '/api/ai/suggestions');
+    return [
+      for (final s in json['suggestions'] as List) s as Map<String, dynamic>,
+    ];
+  }
+
+  /// 제안 승인(true) 또는 거절(false)
+  Future<void> decideSuggestion(int id, bool approve) => _send(
+    'POST',
+    '/api/ai/suggestions/$id/${approve ? 'approve' : 'reject'}',
+    {},
+  );
 
   Future<List<Map<String, dynamic>>> fetchScenarios() async {
     final json = await _send('GET', '/api/simulate');

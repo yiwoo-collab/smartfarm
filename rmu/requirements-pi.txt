@@ -1,6 +1,6 @@
-# 라즈베리파이(1단계 실물)에서만 필요. PC의 모의 RMU는 설치할 것이 없다.
+# 라즈베리파이(실사용)에서만 필요. RMU SNMP 통신은 표준 라이브러리(snmp_lite.py)라 설치할 것이 없다.
 adafruit-blinka
-adafruit-circuitpython-bme280
-adafruit-circuitpython-ads1x15<3   # hardware.py가 2.x API(ADS.P0)를 사용
-adafruit-circuitpython-ina219
+adafruit-circuitpython-bme280      # 온습도감지기가 BME280일 때
+adafruit-circuitpython-dht         # 온습도감지기가 DHT22일 때
+adafruit-circuitpython-ads1x15<3   # 수위감지기가 아날로그(ADS1115)일 때
 gpiozero

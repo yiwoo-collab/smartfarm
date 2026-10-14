@@ -25,7 +25,7 @@ class HistorySensor {
 }
 
 const historySensors = [
-  HistorySensor('temperature', '온도', '℃', 1, [
+  HistorySensor('temperature', '온도 (RMU temp1)', '℃', 1, [
     ('temp_high', '상한'),
     ('temp_low', '하한'),
   ]),
@@ -33,13 +33,21 @@ const historySensors = [
     ('humidity_high', '상한'),
     ('humidity_low', '하한'),
   ]),
-  HistorySensor('soil_moisture', '토양수분', '%', 0, [('soil_low', '하한')]),
-  HistorySensor('co2', 'CO2', 'ppm', 0, [('co2_high', '상한')]),
-  HistorySensor('nutrient_ec', '양분(EC)', 'mS/cm', 2, [('ec_low', '하한')]),
-  HistorySensor('supply_voltage', '공급 전압', 'V', 2, [('voltage_low', '하한')]),
-  HistorySensor('supply_current', '공급 전류', 'A', 2, [('current_high', '상한')]),
+  HistorySensor('water_level', '수위', '%', 0, [('water_level_low', '하한')]),
+  HistorySensor('ac_voltage', 'AC 전압 (RMU acv1)', 'V', 1, [
+    ('ac_voltage_high', '상한'),
+    ('ac_voltage_low', '하한'),
+  ]),
+  HistorySensor('temp2', '온도2 (RMU temp2)', '℃', 1),
+  HistorySensor('hum_temp', '온습도감지기 온도', '℃', 1),
   HistorySensor('greenhouse_power', '온실 전체 전력', 'W', 0),
-  HistorySensor('rmu_temp', 'RMU 온도', '℃', 1, [('rmu_temp_high', '상한')]),
+  HistorySensor('pi_temp', '라즈베리파이 온도', '℃', 1, [('pi_temp_high', '상한')]),
+  HistorySensor('main_fan_temp', '메인 환풍기 온도', '℃', 1, [('part_temp_high', '상한')]),
+  HistorySensor('cooling_fan_temp', '쿨링팬 온도', '℃', 1, [('part_temp_high', '상한')]),
+  // 감지기 없음: 값이 없으면 그래프가 비어 있다 (정보없음)
+  HistorySensor('co2', 'CO2', 'ppm', 0, [('co2_high', '상한')]),
+  HistorySensor('soil_moisture', '토양수분', '%', 0, [('soil_low', '하한')]),
+  HistorySensor('nutrient_ec', '양분(EC)', 'mS/cm', 2, [('ec_low', '하한')]),
   HistorySensor('alarm_level', '알람 등급', '', 0),
 ];
 
@@ -98,7 +106,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         _error = null;
       });
     } catch (e) {
-      if (mounted) setState(() => _error = 'RMU에서 기록을 받지 못했습니다');
+      if (mounted) setState(() => _error = '라즈베리파이에서 기록을 받지 못했습니다');
     }
   }
 
@@ -164,7 +172,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           else if (points.isEmpty)
             const SizedBox(
               height: 240,
-              child: Center(child: Text('기록이 아직 없습니다 (10초마다 기록)')),
+              child: Center(child: Text('기록이 없습니다 (10초마다 기록, 감지기가 없는 항목은 정보없음)')),
             )
           else ...[
             SizedBox(height: 260, child: _chart(context, points)),

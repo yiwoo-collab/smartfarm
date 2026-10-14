@@ -7,7 +7,7 @@ import 'farm_settings_screen.dart';
 /// 설정 탭
 ///  - 화면 모드 (라이트/다크), 알림 받기/끄기 (앱 설정, 폰에 저장)
 ///  - 농장 연결 (농장 전환 방법 2)
-///  - 농장별 RMU 관리: 야간 모드, 임계값, 시뮬레이션 (RMU 설정)
+///  - 농장별 관리: 야간 모드, 임계값, AI 모드(데모/실사용), 시뮬레이션 (라즈베리파이 설정)
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -31,6 +31,13 @@ class SettingsScreen extends StatelessWidget {
                 value: settings.darkMode,
                 onChanged: settings.setDarkMode,
               ),
+              SwitchListTile(
+                secondary: const Icon(Icons.swipe),
+                title: const Text('홈 좌우 스와이프로 농장 전환'),
+                subtitle: const Text('끄면 위쪽 농장 탭 줄만 사용 (v3.0 제안)'),
+                value: settings.homeSwipe,
+                onChanged: settings.setHomeSwipe,
+              ),
 
               _header(context, '알림'),
               SwitchListTile(
@@ -45,7 +52,7 @@ class SettingsScreen extends StatelessWidget {
                   secondary: const Icon(Icons.phone_android),
                   title: const Text('휴대폰/브라우저 알림'),
                   subtitle: const Text(
-                    '앱이 뒤에 있어도 알림창에 표시합니다. 앱이 완전히 꺼져 있을 때는 RMU 푸시(ntfy)를 쓰세요',
+                    '앱이 뒤에 있어도 알림창에 표시합니다. 앱이 완전히 꺼져 있을 때는 라즈베리파이 푸시(ntfy)를 쓰세요',
                   ),
                   value: settings.systemNotifications,
                   onChanged: (v) => _toggleSystemNotifications(context, v),
@@ -87,7 +94,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
 
-              _header(context, 'RMU 관리 (야간 모드 · 임계값 · 시뮬레이션)'),
+              _header(context, '농장 관리 (야간 모드 · 임계값 · AI 모드 · 시뮬레이션)'),
               if (farms.isEmpty) const ListTile(title: Text('연결된 농장이 없습니다')),
               for (final f in farms)
                 ListTile(

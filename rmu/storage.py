@@ -16,9 +16,11 @@ RECORD_SECONDS = 10       # 센서 값 기록 간격 (제안)
 KEEP_DAYS = 7             # 기록 보관 기간 (제안)
 
 # 기록하는 항목 (REST 이름). 그래프 화면에서 고를 수 있다.
-HISTORY_SENSORS = ["temperature", "humidity", "soil_moisture", "co2", "nutrient_ec",
-                   "supply_voltage", "supply_current", "greenhouse_power", "rmu_temp",
-                   "main_fan_temp", "backup_fan_temp", "cooling_fan_temp", "alarm_level"]
+HISTORY_SENSORS = ["temperature", "temp2", "humidity", "hum_temp", "water_level", "ac_voltage",
+                   "greenhouse_power", "pi_temp", "main_fan_temp", "backup_fan_temp", "cooling_fan_temp",
+                   "co2", "soil_moisture", "nutrient_ec", "alarm_level"]
+# v3.0에서 항목이 바뀌어 표 이름을 새로 쓴다 (예전 파일과 섞이지 않게)
+TABLE = "readings_v3"
 
 RANGES = {"1h": timedelta(hours=1), "6h": timedelta(hours=6),
           "24h": timedelta(hours=24), "7d": timedelta(days=7)}
@@ -29,33 +31,33 @@ class Storage:
     def __init__(self, path):
         self.lock = threading.Lock()
         self.db = sqlite3.connect(path, check_same_thread=False)
-        self.db.execute("""CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY, time TEXT, level INTEGER, type TEXT,
-            key TEXT, trap TEXT, message TEXT, actions TEXT)""")
+        self.db.execute("""CREATE TABLE IF NOT EXISTS events_v3 (
+            id INTEGER PRIMARY KEY, time TEXT, level INTEGER, type TEXT, key TEXT,
+            code INTEGER, trap TEXT, message TEXT, actions TEXT, ai INTEGER)""")
         columns = ", ".join(f"{s} REAL" for s in HISTORY_SENSORS)
-        self.db.execute(f"CREATE TABLE IF NOT EXISTS readings (time TEXT PRIMARY KEY, {columns})")
+        self.db.execute(f"CREATE TABLE IF NOT EXISTS {TABLE} (time TEXT PRIMARY KEY, {columns})")
         self.db.commit()
         self._last_record = None
 
     # ----- 이벤트 -------------------------------------------------------------
     def add_event(self, e):
         with self.lock:
-            self.db.execute("INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            (e["id"], e["time"], e["level"], e["type"], e["key"], e["trap"],
-                             e["message"], json.dumps(e["actions"], ensure_ascii=False)))
+            self.db.execute("INSERT INTO events_v3 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (e["id"], e["time"], e["level"], e["type"], e["key"], e.get("code"), e["trap"],
+                             e["message"], json.dumps(e["actions"], ensure_ascii=False), int(bool(e.get("ai")))))
             self.db.commit()
 
     def events_since(self, since, limit=500):
         with self.lock:
             rows = self.db.execute(
-                "SELECT id, time, level, type, key, trap, message, actions FROM events "
+                "SELECT id, time, level, type, key, code, trap, message, actions, ai FROM events_v3 "
                 "WHERE id > ? ORDER BY id LIMIT ?", (since, limit)).fetchall()
-        return [{"id": r[0], "time": r[1], "level": r[2], "type": r[3], "key": r[4],
-                 "trap": r[5], "message": r[6], "actions": json.loads(r[7])} for r in rows]
+        return [{"id": r[0], "time": r[1], "level": r[2], "type": r[3], "key": r[4], "code": r[5],
+                 "trap": r[6], "message": r[7], "actions": json.loads(r[8]), "ai": bool(r[9])} for r in rows]
 
     def last_event_id(self):
         with self.lock:
-            row = self.db.execute("SELECT MAX(id) FROM events").fetchone()
+            row = self.db.execute("SELECT MAX(id) FROM events_v3").fetchone()
         return row[0] or 0
 
     # ----- 센서 기록 ----------------------------------------------------------
@@ -66,10 +68,10 @@ class Storage:
         self._last_record = now
         row = [now.isoformat(timespec="seconds")] + [values.get(s) for s in HISTORY_SENSORS]
         with self.lock:
-            self.db.execute(f"INSERT OR REPLACE INTO readings VALUES ({', '.join('?' * len(row))})", row)
+            self.db.execute(f"INSERT OR REPLACE INTO {TABLE} VALUES ({', '.join('?' * len(row))})", row)
             # 오래된 기록 정리 (하루에 한 번 정도면 충분하지만 단순하게 매번)
             cutoff = (now - timedelta(days=KEEP_DAYS)).isoformat(timespec="seconds")
-            self.db.execute("DELETE FROM readings WHERE time < ?", (cutoff,))
+            self.db.execute(f"DELETE FROM {TABLE} WHERE time < ?", (cutoff,))
             self.db.commit()
 
     def history(self, sensor, range_name, now=None):
@@ -84,7 +86,7 @@ class Storage:
         bucket = max(RECORD_SECONDS, int(span.total_seconds() / MAX_POINTS))
         with self.lock:
             rows = self.db.execute(
-                f"SELECT time, {sensor} FROM readings WHERE time >= ? ORDER BY time",
+                f"SELECT time, {sensor} FROM {TABLE} WHERE time >= ? ORDER BY time",
                 (start.isoformat(timespec="seconds"),)).fetchall()
         # 같은 구간(bucket초)에 들어온 값을 평균 낸다. 센서 오류(None)는 빼고 계산.
         points, current, values = [], None, []

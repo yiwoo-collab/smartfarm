@@ -50,11 +50,11 @@ class FarmStore extends ChangeNotifier {
       ..._farms,
       Farm(
         id: '$now-d1',
-        name: '방울토마토 1동 (데모)',
+        name: '방울토마토 1동',
         crop: '방울토마토',
         rmuAddress: 'demo:1',
       ),
-      Farm(id: '$now-d2', name: '상추 2동 (데모)', crop: '상추', rmuAddress: 'demo:2'),
+      Farm(id: '$now-d2', name: '상추 2동', crop: '상추', rmuAddress: 'demo:2'),
     ]);
   }
 

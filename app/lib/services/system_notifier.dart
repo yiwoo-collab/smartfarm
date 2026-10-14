@@ -70,7 +70,7 @@ class SystemNotifier {
           android: AndroidNotificationDetails(
             e.level >= 3 ? 'emergency' : 'alarms',
             e.level >= 3 ? '긴급 경보' : '경보 알림',
-            channelDescription: '스마트팜 RMU 알람',
+            channelDescription: '스마트팜 알람',
             importance: e.level >= 3 ? Importance.max : Importance.high,
             priority: Priority.high,
           ),

@@ -46,7 +46,7 @@ class FarmListScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.play_circle),
                 title: const Text('데모 농장 추가 (서버 없이 체험)'),
-                subtitle: const Text('앱 안의 모의 RMU로 시나리오 1~22를 바로 확인'),
+                subtitle: const Text('앱 안의 모의 게이트웨이로 시나리오 1~29를 바로 확인'),
                 onTap: store.addDemoFarms,
               ),
               ListTile(
@@ -54,8 +54,8 @@ class FarmListScreen extends StatelessWidget {
                 title: const Text('예시 농장 추가 (개발용)'),
                 subtitle: Text(
                   kIsWeb
-                      ? '모의 RMU ${_pageHost()}:8080, 8081'
-                      : '모의 RMU를 실행 중인 PC의 IP를 입력합니다',
+                      ? '모의 서버 ${_pageHost()}:8080, 8081'
+                      : '모의 서버를 실행 중인 PC의 IP를 입력합니다',
                 ),
                 onTap: () => _addMockFarms(context),
               ),
@@ -77,7 +77,7 @@ class FarmListScreen extends StatelessWidget {
     final host = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('모의 RMU PC 주소'),
+        title: const Text('모의 서버 PC 주소'),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.url,
@@ -120,16 +120,16 @@ String connectionFailureHint(Object e) {
   final text = e.toString().toLowerCase();
   if (e is TimeoutException || text.contains('timeout')) {
     return '응답이 없습니다. ① 폰과 PC가 같은 와이파이인지(모바일 데이터 끄기) '
-        '② PC에서 RMU(시작하기.bat)가 켜져 있는지 ③ PC 방화벽이 막지 않는지 확인하세요';
+        '② PC에서 서버(시작하기.bat)가 켜져 있는지 ③ PC 방화벽이 막지 않는지 확인하세요';
   }
   if (text.contains('refused')) {
-    return 'PC에는 닿았지만 RMU 서버가 꺼져 있거나 포트가 다릅니다. '
+    return 'PC에는 닿았지만 서버가 꺼져 있거나 포트가 다릅니다. '
         '시작하기.bat이 켜져 있는지, 포트(8080/8081)를 확인하세요';
   }
   if (text.contains('unreachable') || text.contains('no route')) {
     return '네트워크에서 그 주소를 찾을 수 없습니다. 폰이 PC와 같은 와이파이인지 확인하세요';
   }
-  if (e is ApiException) return 'RMU가 오류로 응답했습니다: ${e.message}';
+  if (e is ApiException) return '라즈베리파이가 오류로 응답했습니다: ${e.message}';
   return '주소를 확인하세요 ($e)';
 }
 
@@ -289,7 +289,7 @@ class _FarmEditScreenState extends State<FarmEditScreen> {
             TextFormField(
               controller: _address,
               decoration: const InputDecoration(
-                labelText: 'RMU 주소 (IP:포트, 포트를 빼면 8080)',
+                labelText: '라즈베리파이 주소 (IP:포트, 포트를 빼면 8080)',
                 hintText: '192.168.0.10:8080',
               ),
               validator: _validateAddress,

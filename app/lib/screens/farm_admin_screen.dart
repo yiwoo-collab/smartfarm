@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/farm_monitor.dart';
 import '../services/rmu_api.dart';
 import '../widgets/common.dart';
+import 'ai_screen.dart';
 import 'login_dialog.dart';
 
 /// 설정 > RMU 관리 > 농장 하나
@@ -28,7 +29,7 @@ class _FarmAdminScreenState extends State<FarmAdminScreen> {
   Widget build(BuildContext context) {
     final m = widget.monitor;
     return Scaffold(
-      appBar: AppBar(title: Text('RMU 관리 · ${m.farm.name}')),
+      appBar: AppBar(title: Text('농장 관리 · ${m.farm.name}')),
       body: ListView(
         children: [
           ListTile(
@@ -64,9 +65,20 @@ class _FarmAdminScreenState extends State<FarmAdminScreen> {
             onTap: () => _openWithLogin(ThresholdsScreen(monitor: m)),
           ),
           ListTile(
+            leading: const Icon(Icons.psychology),
+            title: const Text('AI 모드 · AI 제안'),
+            subtitle: Text(
+              '${(m.status?.isDemo ?? true) ? '데모' : '실사용'} 모드 · 데모/실사용 전환, 제안 승인·거절',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => AiScreen(monitor: m)),
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.science),
             title: const Text('시뮬레이션 (개발·시연용)'),
-            subtitle: const Text('고온, 환풍기 고장, 통신 두절 등 상황 주입'),
+            subtitle: const Text('통신 두절, 전원 차단, 화재, 수위, 센서 불일치 등 상황 주입'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => SimulationScreen(monitor: m)),
@@ -80,7 +92,7 @@ class _FarmAdminScreenState extends State<FarmAdminScreen> {
 
 /// 공통: API 오류 메시지를 SnackBar로
 void showApiError(BuildContext context, Object e) {
-  final text = e is ApiException ? e.message : 'RMU에 연결할 수 없습니다';
+  final text = e is ApiException ? e.message : '라즈베리파이에 연결할 수 없습니다';
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 }
 
@@ -215,20 +227,22 @@ class ThresholdsScreen extends StatefulWidget {
 
 class _ThresholdsScreenState extends State<ThresholdsScreen> {
   static const _labels = {
-    'temp_low': ('온도 하한', '℃'),
+    'temp_low': ('온도 하한 (라즈베리파이 판정)', '℃'),
     'temp_high': ('온도 상한', '℃'),
     'humidity_low': ('습도 하한', '%'),
     'humidity_high': ('습도 상한', '%'),
-    'soil_low': ('토양수분 하한', '%'),
-    'voltage_low': ('공급 전압 하한', 'V'),
-    'current_high': ('공급 전류 상한', 'A'),
-    'co2_high': ('CO2 상한', 'ppm'),
-    'ec_low': ('양분(EC) 하한', 'mS/cm'),
-    'rmu_temp_high': ('RMU 온도 상한', '℃'),
+    'water_level_low': ('수위 하한 (제안)', '%'),
+    'ac_voltage_low': ('AC 전압 하한', 'V'),
+    'ac_voltage_high': ('AC 전압 상한', 'V'),
+    'pi_temp_high': ('라즈베리파이 온도 상한', '℃'),
     'part_temp_high': ('환풍기·쿨링팬 온도 상한', '℃'),
-    'part_temp_low': ('부품 온도 하한', '℃'),
+    'part_temp_low': ('장비 온도 하한', '℃'),
     'cooling_setpoint': ('고온 시 에어컨 설정온도', '℃'),
     'heating_setpoint': ('저온 시 에어컨 설정온도', '℃'),
+    'sensor_mismatch': ('센서 불일치 허용 차이 (AI)', '℃'),
+    'soil_low': ('토양수분 하한 (감지기 연결 시)', '%'),
+    'co2_high': ('CO2 상한 (감지기 연결 시)', 'ppm'),
+    'ec_low': ('양분(EC) 하한 (감지기 연결 시)', 'mS/cm'),
   };
 
   final Map<String, TextEditingController> _fields = {};

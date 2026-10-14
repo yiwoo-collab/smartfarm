@@ -7,11 +7,11 @@ import '../services/farm_monitor.dart';
 import '../widgets/common.dart';
 import 'history_screen.dart';
 
-/// 세부 화면 (CLAUDE.md 3장)
-///  - 공급 전압·전류와 정상 여부
+/// 세부 화면 (CLAUDE.md 3장 v3.0)
+///  - 전원 상태: RMU acv1(AC 전압), ach1(주파수)과 정상 여부, UPS 배터리
 ///  - 온실 전체 사용 전력: 순간 전력(W)과 누적 전력량(kWh) 구분 (시뮬레이션 값)
-///  - RMU 온도, 환풍기·쿨링팬 장비 온도
-///  - CO2, 양분(EC)
+///  - 라즈베리파이 온도, 환풍기·쿨링팬 장비 온도
+///  - RMU 연결 상태, 온도2, 전면 도어
 class DetailScreen extends StatefulWidget {
   final FarmMonitor monitor;
 
@@ -47,16 +47,21 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  void _history(String sensor) => Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => HistoryScreen(monitor: widget.monitor, initialSensor: sensor),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final monitor = widget.monitor;
     return ListenableBuilder(
       listenable: monitor,
       builder: (context, _) {
-        final status = monitor.status;
+        final s = monitor.status;
         final stale = !monitor.connected;
         final power = _power;
-        final errors = status?.sensorErrors ?? const [];
         return Scaffold(
           appBar: AppBar(title: Text('세부 정보 · ${monitor.farm.name}')),
           body: ListView(
@@ -72,47 +77,57 @@ class _DetailScreenState extends State<DetailScreen> {
               OutlinedButton.icon(
                 icon: const Icon(Icons.show_chart),
                 label: const Text('기록 그래프'),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => HistoryScreen(monitor: monitor),
-                  ),
-                ),
+                onPressed: () => _history('temperature'),
               ),
-              _section(context, '공급 전원 (INA219)'),
-              if (power != null) ...[
+              if (s != null) ...[
+                _section(context, 'RMU 연결'),
+                _rmuTile(s),
+                _section(context, '전원 (RMU acv1 · ach1)'),
                 ValueTile(
                   icon: Icons.bolt,
-                  label: '전압',
-                  value:
-                      '${(power['supply_voltage'] as num).toStringAsFixed(2)} V',
-                  valueColor: _voltageOk(power) ? null : Colors.red,
+                  label: 'AC 전압',
+                  value: fmt(s.acVoltage, 1, 'V'),
+                  valueColor: s.powerOk ? null : Colors.red,
                   stale: stale,
+                  state: s.stateOf('ac_voltage'),
+                  onTap: () => _history('ac_voltage'),
                 ),
                 ValueTile(
-                  icon: Icons.electric_meter,
-                  label: '전류',
-                  value:
-                      '${(power['supply_current'] as num).toStringAsFixed(2)} A',
-                  valueColor: _currentOk(power) ? null : Colors.red,
+                  icon: Icons.graphic_eq,
+                  label: 'AC 주파수',
+                  value: fmt(s.acFrequency, 1, 'Hz'),
                   stale: stale,
+                  state: s.stateOf('ac_frequency'),
                 ),
                 ValueTile(
                   icon: Icons.power,
-                  label: '공급 전원 상태',
-                  value: power['power_ok'] == true ? '정상' : '이상',
-                  valueColor: power['power_ok'] == true ? null : Colors.red,
+                  label: '전원 공급 상태',
+                  value: s.powerOk ? '정상' : '이상',
+                  valueColor: s.powerOk ? null : Colors.red,
                   stale: stale,
+                  state: s.stateOf('ac_voltage'),
                 ),
-                Text(
-                  '기준: 전압 ${power['voltage_low']} V 이상, 전류 ${power['current_high']} A 이하',
-                  style: Theme.of(context).textTheme.bodySmall,
+                ValueTile(
+                  icon: Icons.battery_std,
+                  label: 'UPS 배터리',
+                  value: fmt(s.upsBattery, 0, '%'),
+                  stale: stale,
+                  state: s.stateOf('ups_battery'),
                 ),
-                _section(context, '온실 전체 사용 전력 (시뮬레이션)'),
+                if (power != null)
+                  Text(
+                    '기준: AC ${power['ac_voltage_low']}~${power['ac_voltage_high']} V (RMU setAcv1Uvt/Ovt)',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+              _section(context, '온실 전체 사용 전력 (시뮬레이션)'),
+              if (power != null) ...[
                 ValueTile(
                   icon: Icons.speed,
                   label: '순간 전력',
                   value: '${power['greenhouse_power']} W',
                   stale: stale,
+                  onTap: () => _history('greenhouse_power'),
                 ),
                 ValueTile(
                   icon: Icons.summarize,
@@ -130,9 +145,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           title: Text(d['label'] as String),
                           trailing: Text(
                             d['on'] == true ? '${d['watts']} W' : '꺼짐',
-                            style: TextStyle(
-                              color: d['on'] == true ? null : Colors.grey,
-                            ),
+                            style: TextStyle(color: d['on'] == true ? null : Colors.grey),
                           ),
                         ),
                     ],
@@ -143,48 +156,59 @@ class _DetailScreenState extends State<DetailScreen> {
                   padding: EdgeInsets.all(16),
                   child: Center(child: CircularProgressIndicator()),
                 ),
-              if (status != null) ...[
-                _section(context, '부품·장비 온도'),
-                for (final e in status.partTemps.entries)
+              if (s != null) ...[
+                _section(context, '라즈베리파이·장비 온도'),
+                for (final e in s.partTemps.entries)
                   ValueTile(
                     icon: Icons.device_thermostat,
                     label: displayNames[e.key] ?? e.key,
                     value: fmt(e.value, 1, '℃'),
                     stale: stale,
-                    error: errors.contains(e.key),
-                    valueColor: _partLevel(status, e.key) > 0
-                        ? levelColor(_partLevel(status, e.key))
+                    state: s.stateOf(e.key),
+                    valueColor: _partLevel(s, e.key) > 0
+                        ? levelColor(_partLevel(s, e.key))
                         : null,
+                    onTap: () => _history(e.key),
                   ),
                 _section(context, '환풍기'),
                 ValueTile(
                   icon: Icons.wind_power,
                   label: '메인 환풍기',
-                  value: status.mainFanOk ? '정상' : '고장',
-                  valueColor: status.mainFanOk ? null : Colors.red,
+                  value: s.mainFanOk ? '정상' : '고장',
+                  valueColor: s.mainFanOk ? null : Colors.red,
                   stale: stale,
                 ),
                 ValueTile(
                   icon: Icons.wind_power,
                   label: '예비 환풍기',
-                  value: status.backupFanOk ? '정상' : '고장',
-                  valueColor: status.backupFanOk ? null : Colors.red,
+                  value: s.backupFanOk ? '정상' : '고장',
+                  valueColor: s.backupFanOk ? null : Colors.red,
                   stale: stale,
                 ),
-                _section(context, '기타 센서 (시뮬레이션)'),
+                _section(context, '기타'),
                 ValueTile(
-                  icon: Icons.co2,
-                  label: 'CO2',
-                  value: fmt(status.co2, 0, 'ppm'),
+                  icon: Icons.thermostat,
+                  label: displayNames['temp2']!,
+                  value: fmt(s.sensors['temp2'], 1, '℃'),
                   stale: stale,
-                  error: errors.contains('co2'),
+                  state: s.stateOf('temp2'),
+                  onTap: () => _history('temp2'),
                 ),
                 ValueTile(
-                  icon: Icons.science,
-                  label: '양분(EC)',
-                  value: fmt(status.nutrientEc, 2, 'mS/cm'),
+                  icon: Icons.thermostat_auto,
+                  label: displayNames['hum_temp']!,
+                  value: fmt(s.sensors['hum_temp'], 1, '℃'),
                   stale: stale,
-                  error: errors.contains('nutrient_ec'),
+                  state: s.stateOf('hum_temp'),
+                  onTap: () => _history('hum_temp'),
+                ),
+                ValueTile(
+                  icon: Icons.door_front_door,
+                  label: '전면 도어 (RMU)',
+                  value: s.doorOpen == null ? '-' : (s.doorOpen! ? '열림' : '닫힘'),
+                  valueColor: s.doorOpen == true ? Colors.orange : null,
+                  stale: stale,
+                  state: s.doorOpen == null ? 'nodata' : s.stateOf('door_front'),
                 ),
               ],
             ],
@@ -194,11 +218,27 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  bool _voltageOk(Map<String, dynamic> p) =>
-      (p['supply_voltage'] as num) >= (p['voltage_low'] as num);
-
-  bool _currentOk(Map<String, dynamic> p) =>
-      (p['supply_current'] as num) <= (p['current_high'] as num);
+  Widget _rmuTile(RmuStatus s) {
+    if (!s.rmu.used) {
+      return const Card(
+        child: ListTile(
+          leading: Icon(Icons.router, color: Colors.grey),
+          title: Text('RMU 실물 미사용'),
+          subtitle: Text('RMU 항목(온도·전원)은 시뮬레이션 값입니다'),
+        ),
+      );
+    }
+    final ok = s.rmu.connected == true;
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.router, color: ok ? Colors.green : Colors.grey),
+        title: Text(ok ? 'RMU 연결됨 (SNMP v2c)' : 'RMU 통신 두절'),
+        subtitle: Text(
+          s.rmu.lastSeen == null ? '받은 값이 없습니다' : '마지막 수신 ${formatTime(s.rmu.lastSeen!)}',
+        ),
+      ),
+    );
+  }
 
   /// 해당 부품에 걸린 알람 등급 (없으면 0)
   int _partLevel(RmuStatus s, String part) => s.conditions

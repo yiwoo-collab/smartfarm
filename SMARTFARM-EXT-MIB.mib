@@ -1,0 +1,388 @@
+SMARTFARM-EXT-MIB DEFINITIONS ::= BEGIN
+
+-- Generated from oids.json by rmu/gen_mib.py. Do not edit by hand.
+-- Smartfarm extension under the PELKOREA RMU tree ({ rmu 6 }). Numbers are temporary.
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32, enterprises
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+smartfarmExt MODULE-IDENTITY
+    LAST-UPDATED "202610140000Z"
+    ORGANIZATION "Smartfarm Capstone Team"
+    CONTACT-INFO "Smartfarm Capstone Team"
+    DESCRIPTION  "Smartfarm items provided by the Raspberry Pi gateway.
+                  Scalars are accessed with the .0 instance suffix."
+    REVISION     "202610140000Z"
+    DESCRIPTION  "Generated from oids.json (v3.0)."
+    ::= { enterprises 61123730 1 6 }
+
+sfStatus             OBJECT IDENTIFIER ::= { smartfarmExt 1 }
+sfThresholds         OBJECT IDENTIFIER ::= { smartfarmExt 2 }
+sfControl            OBJECT IDENTIFIER ::= { smartfarmExt 3 }
+sfNotifications      OBJECT IDENTIFIER ::= { smartfarmExt 4 }
+sfTraps              OBJECT IDENTIFIER ::= { sfNotifications 0 }
+sfTrapObjects        OBJECT IDENTIFIER ::= { sfNotifications 1 }
+
+-- Current values (read-only)
+
+sfHumidity OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "% (value x 10)"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Humidity (temperature-humidity sensor on the Pi)."
+    ::= { sfStatus 1 }
+
+sfHumTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Temperature from the humidity sensor (for sensor mismatch check)."
+    ::= { sfStatus 2 }
+
+sfWaterLevel OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "%"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Water level ((제안) 0..100 %, a float switch reports 0 or 100)."
+    ::= { sfStatus 3 }
+
+sfFire OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fire detector (0 = normal, 1 = fire)."
+    ::= { sfStatus 4 }
+
+sfPiTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Raspberry Pi CPU temperature."
+    ::= { sfStatus 5 }
+
+sfMainFanTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Main fan device temperature (simulated)."
+    ::= { sfStatus 6 }
+
+sfBackupFanTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Backup fan device temperature (simulated)."
+    ::= { sfStatus 7 }
+
+sfCoolingFanTemp OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Cooling fan device temperature (simulated)."
+    ::= { sfStatus 8 }
+
+sfGreenhousePower OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "W"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total greenhouse power (simulated)."
+    ::= { sfStatus 9 }
+
+sfCo2 OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "ppm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "CO2 (no sensor: nodata). Not connected: no data."
+    ::= { sfStatus 10 }
+
+sfSoilMoisture OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "%"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Soil moisture (no sensor: nodata). Not connected: no data."
+    ::= { sfStatus 11 }
+
+sfNutrientEc OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "mS/cm (value x 100)"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Nutrient EC (no sensor: nodata). Not connected: no data."
+    ::= { sfStatus 12 }
+
+sfAlarmLevel OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Farm alarm level computed by the Pi (0 normal, 1 caution, 2 alarm, 3 emergency)."
+    ::= { sfStatus 13 }
+
+sfAlarmCode OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Most severe active alarm code (RMU code or our 2xx code)."
+    ::= { sfStatus 14 }
+
+-- Thresholds (read-write)
+
+sfTempLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Greenhouse temperature lower limit (judged on the Pi; RMU cannot hold 15 C)."
+    ::= { sfThresholds 1 }
+
+sfTempHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Greenhouse temperature upper limit."
+    ::= { sfThresholds 2 }
+
+sfHumidityLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "% (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Humidity lower limit."
+    ::= { sfThresholds 3 }
+
+sfHumidityHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "% (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Humidity upper limit."
+    ::= { sfThresholds 4 }
+
+sfWaterLevelLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "%"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Water level lower limit ((제안) 20 %)."
+    ::= { sfThresholds 5 }
+
+sfAcVoltageLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "V (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "AC voltage lower limit ((제안) 200 V)."
+    ::= { sfThresholds 6 }
+
+sfAcVoltageHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "V (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "AC voltage upper limit ((제안) 240 V)."
+    ::= { sfThresholds 7 }
+
+sfPiTempHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Raspberry Pi temperature upper limit."
+    ::= { sfThresholds 8 }
+
+sfPartTempHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Fan device temperature upper limit."
+    ::= { sfThresholds 9 }
+
+sfPartTempLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Device temperature lower limit."
+    ::= { sfThresholds 10 }
+
+sfCoolingSetpoint OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner set temperature for automatic cooling."
+    ::= { sfThresholds 11 }
+
+sfHeatingSetpoint OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner set temperature for automatic heating."
+    ::= { sfThresholds 12 }
+
+sfSensorMismatch OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Allowed difference between RMU temp1 and the humidity sensor temperature ((제안) 3 C)."
+    ::= { sfThresholds 13 }
+
+sfSoilLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "%"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Soil moisture lower limit (used when a sensor is connected)."
+    ::= { sfThresholds 14 }
+
+sfCo2High OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "ppm"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "CO2 upper limit (used when a sensor is connected)."
+    ::= { sfThresholds 15 }
+
+sfEcLow OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "mS/cm (value x 100)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Nutrient EC lower limit (used when a sensor is connected)."
+    ::= { sfThresholds 16 }
+
+-- Device control (read-write)
+
+sfMainFan OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Main ventilation fan (0 off, 1 on)."
+    ::= { sfControl 1 }
+
+sfBackupFan OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Backup ventilation fan (0 off, 1 on)."
+    ::= { sfControl 2 }
+
+sfCoolingFan OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Cooling fan (0 off, 1 on)."
+    ::= { sfControl 3 }
+
+sfAircon OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner (simulated)."
+    ::= { sfControl 4 }
+
+sfAirconSetpoint OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "C (value x 10)"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Air conditioner set temperature."
+    ::= { sfControl 5 }
+
+sfHeater OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Heater (simulated)."
+    ::= { sfControl 6 }
+
+sfPump OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Water pump."
+    ::= { sfControl 7 }
+
+sfCover OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Shade cover (0 open, 1 closed, simulated)."
+    ::= { sfControl 8 }
+
+sfLights OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Greenhouse lights (simulated)."
+    ::= { sfControl 9 }
+
+sfControlMode OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Control mode (0 manual, 1 auto)."
+    ::= { sfControl 10 }
+
+-- Settings (read-write)
+
+sfNightMode OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Night mode enabled."
+    ::= { sfControl 11 }
+
+sfNightStart OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "min"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Night mode start (minutes after midnight)."
+    ::= { sfControl 12 }
+
+sfNightEnd OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "min"
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Night mode end (minutes after midnight)."
+    ::= { sfControl 13 }
+
+sfAiMode OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "AI mode (0 demo, 1 live)."
+    ::= { sfControl 14 }
+
+sfAlarmMessage OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION "Alarm or clear message (UTF-8)"
+    ::= { sfTrapObjects 1 }
+
+farmAlarm NOTIFICATION-TYPE
+    OBJECTS     { sfAlarmLevel, sfAlarmCode, sfAlarmMessage }
+    STATUS      current
+    DESCRIPTION "Farm alarm raised or cleared by the Pi (level, code, message)"
+    ::= { sfTraps 1 }
+
+END
