@@ -10,9 +10,11 @@
 
 import json
 import os
+import sys
 import tempfile
 import threading
 import unittest
+import unittest.mock
 from http.server import ThreadingHTTPServer
 
 import oids as oidlib
@@ -184,7 +186,11 @@ class TrapAndHardwareTest(unittest.TestCase):
         cfg["cpu_temp_path"] = os.path.join(tempfile.gettempdir(), "no_such_cpu_temp")
         path = os.path.join(tempfile.mkdtemp(), "hw.json")
         json.dump(cfg, open(path, "w", encoding="utf-8"))
-        hw = Hardware(path)
+        # 라이브러리가 없는 상태를 흉내 (라즈베리파이 OS에는 gpiozero가 기본으로 들어 있다)
+        blocked = ["gpiozero", "board", "busio", "adafruit_bme280", "adafruit_dht", "adafruit_ads1x15",
+                   "adafruit_ads1x15.ads1115", "adafruit_ads1x15.analog_in"]
+        with unittest.mock.patch.dict(sys.modules, {name: None for name in blocked}):
+            hw = Hardware(path)
         self.assertEqual(hw.read(), {})
         hw.apply({"main_fan": 1})
         self.assertIn("사용 안 함", hw.summary())
