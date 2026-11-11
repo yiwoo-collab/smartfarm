@@ -64,6 +64,22 @@ class StorageTest(unittest.TestCase):
         self.assertEqual(m.storage.history("humidity", "1h", now=end), [])  # 오류 값은 그래프에서 빠짐
         self.assertTrue(m.storage.history("temperature", "1h", now=end))
 
+    def test_old_file_with_different_columns(self):
+        # 예전 버전 파일 (hum_temp 열이 있고 co2 열이 없음) → 지우지 않고 그대로 이어서 기록
+        import sqlite3
+        from storage import HISTORY_SENSORS, TABLE
+        path = os.path.join(tempfile.mkdtemp(), "old.db")
+        old = [c for c in HISTORY_SENSORS if c != "co2"] + ["hum_temp"]
+        db = sqlite3.connect(path)
+        db.execute(f"CREATE TABLE {TABLE} (time TEXT PRIMARY KEY, {', '.join(c + ' REAL' for c in old)})")
+        db.commit()
+        db.close()
+        st = Storage(path)
+        now = datetime(2026, 11, 11, 12, 0, 0)
+        st.maybe_record(now, {"temperature": 25.3, "co2": None})
+        points = st.history("temperature", "1h", now=now)
+        self.assertEqual(points[-1]["value"], 25.3)
+
     def test_invalid_query(self):
         s = Storage(self.path)
         with self.assertRaises(ValueError):

@@ -36,6 +36,11 @@ class Storage:
             code INTEGER, trap TEXT, message TEXT, actions TEXT, ai INTEGER)""")
         columns = ", ".join(f"{s} REAL" for s in HISTORY_SENSORS)
         self.db.execute(f"CREATE TABLE IF NOT EXISTS {TABLE} (time TEXT PRIMARY KEY, {columns})")
+        # 예전 파일에 없는 항목은 열을 추가한다 (없어진 항목의 열은 그대로 두고 비워 둔다)
+        existing = {r[1] for r in self.db.execute(f"PRAGMA table_info({TABLE})")}
+        for s in HISTORY_SENSORS:
+            if s not in existing:
+                self.db.execute(f"ALTER TABLE {TABLE} ADD COLUMN {s} REAL")
         self.db.commit()
         self._last_record = None
 
@@ -68,7 +73,9 @@ class Storage:
         self._last_record = now
         row = [now.isoformat(timespec="seconds")] + [values.get(s) for s in HISTORY_SENSORS]
         with self.lock:
-            self.db.execute(f"INSERT OR REPLACE INTO {TABLE} VALUES ({', '.join('?' * len(row))})", row)
+            # 열 이름을 적어서 넣는다: 항목이 바뀐 예전 기록 파일에서도 그대로 동작
+            names = ", ".join(["time"] + HISTORY_SENSORS)
+            self.db.execute(f"INSERT OR REPLACE INTO {TABLE} ({names}) VALUES ({', '.join('?' * len(row))})", row)
             # 오래된 기록 정리 (하루에 한 번 정도면 충분하지만 단순하게 매번)
             cutoff = (now - timedelta(days=KEEP_DAYS)).isoformat(timespec="seconds")
             self.db.execute(f"DELETE FROM {TABLE} WHERE time < ?", (cutoff,))

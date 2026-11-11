@@ -31,6 +31,7 @@ import re
 import secrets
 import threading
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -236,16 +237,20 @@ class Handler(BaseHTTPRequestHandler):
 
 def tick_loop():
     while True:
-        if hardware is not None:
-            # 라즈베리파이에서 나는 값만 받는다 (감지기는 RMU로 연결, oids.json의 source)
-            readings = hardware.read()
-            rmu.set_external({k: v for k, v in readings.items() if k in PI_NAMES}, "pi")
-            rmu.hw_fan_failed = hardware.fan_failures(rmu.control)
-        rmu.tick()
-        if push_sender is not None:
-            with rmu.lock:
-                active = dict(rmu.active)
-            push_sender.remind(active)
+        try:
+            if hardware is not None:
+                # 라즈베리파이에서 나는 값만 받는다 (감지기는 RMU로 연결, oids.json의 source)
+                readings = hardware.read()
+                rmu.set_external({k: v for k, v in readings.items() if k in PI_NAMES}, "pi")
+                rmu.hw_fan_failed = hardware.fan_failures(rmu.control)
+            rmu.tick()
+            if push_sender is not None:
+                with rmu.lock:
+                    active = dict(rmu.active)
+                push_sender.remind(active)
+        except Exception:
+            # 한 번의 오류로 값 갱신이 통째로 멈추지 않게 기록만 하고 계속 돈다
+            traceback.print_exc()
         time.sleep(TICK_SECONDS)
 
 
