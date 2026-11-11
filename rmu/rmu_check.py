@@ -22,7 +22,7 @@ def main():
     p.add_argument("--host", required=True)
     p.add_argument("--port", type=int, default=161)
     p.add_argument("--community", default="public")
-    p.add_argument("--write-community", default="private")
+    p.add_argument("--write-community", default="public")  # 실물 RMU는 public으로 Set 허용
     p.add_argument("--trap", action="store_true", help="addTrap 등록 후 Trap 기다리기")
     p.add_argument("--trap-port", type=int, default=1162)
     args = p.parse_args()

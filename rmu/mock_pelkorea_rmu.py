@@ -27,7 +27,7 @@ from snmp_lite import (GET, GET_NEXT, RESPONSE, SET, SNMP_TRAP_OID, SYS_UPTIME_O
 
 
 class MockRmu:
-    def __init__(self, ro_community="public", rw_community="private"):
+    def __init__(self, ro_community="public", rw_community="public"):
         self.ro, self.rw = ro_community, rw_community
         self.lock = threading.Lock()
         self.start_time = time.time()
@@ -36,7 +36,7 @@ class MockRmu:
         self.trap_oid = oids["rmu_trap"]["oid"].strip(".")
         # MIB 원시값 (temp1 = 25.0℃ → 750, acv1 = 220.0V → 2200)
         self.raw = {
-            "acv1": 2200, "ach1": 600, "temp1": 750, "temp2": 740, "humidity1": 720, "fire": 1,
+            "acv1": 2200, "ach1": 600, "temp1": 750, "temp2": 740, "humidity1": 720, "fire": 1, "flood": 0,
             "doorFront": 0, "alarm": 0,
             "setAcv1Uvt": 1980, "setAcv1Ovt": 2420, "setTempU": 450, "setTempO": 1000,
             "upsIpv": 2200, "upsOpv": 2200, "upsOpc": 12, "upsBl": 0, "upsBb": 0, "upsBz": 0,
@@ -189,7 +189,7 @@ def main():
     _, port = serve_snmp(rmu, args.snmp_port)
     http = ThreadingHTTPServer(("0.0.0.0", args.http_port), make_http_handler(rmu))
     threading.Thread(target=http.serve_forever, daemon=True).start()
-    print(f"모의 RMU 실행 중: SNMP udp/{port} (public/private), 제어 http://localhost:{args.http_port}/")
+    print(f"모의 RMU 실행 중: SNMP udp/{port} (public), 제어 http://localhost:{args.http_port}/")
     try:
         while True:
             rmu.drift()

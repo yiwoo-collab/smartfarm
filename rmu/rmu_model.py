@@ -69,7 +69,7 @@ MAX_EVENTS = 500
 PARTS = ["pi_temp", "main_fan_temp", "backup_fan_temp", "cooling_fan_temp"]
 OPTIONAL = ["co2", "soil_moisture", "nutrient_ec"]          # 감지기 연결 시에만 (기본 정보없음)
 # RMU에서 읽는 항목 (oids.json의 poll과 같다). 두절되면 이 항목들만 회색으로 표시한다.
-RMU_ITEMS = ["temperature", "temp2", "humidity", "fire", "ac_voltage", "ac_frequency", "door_front", "ups_battery_low"]
+RMU_ITEMS = ["temperature", "temp2", "humidity", "water_level", "fire", "ac_voltage", "ac_frequency", "door_front", "ups_battery_low"]
 SENSORS = ["temperature", "temp2", "humidity", "water_level", "fire",
            "ac_voltage", *PARTS, *OPTIONAL]                  # 센서 오류를 흉내 낼 수 있는 항목
 

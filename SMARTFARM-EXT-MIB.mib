@@ -10,12 +10,12 @@ IMPORTS
         FROM SNMPv2-TC;
 
 smartfarmExt MODULE-IDENTITY
-    LAST-UPDATED "202611040000Z"
+    LAST-UPDATED "202611110000Z"
     ORGANIZATION "Smartfarm Capstone Team"
     CONTACT-INFO "Smartfarm Capstone Team"
     DESCRIPTION  "Smartfarm items provided by the Raspberry Pi gateway.
                   Scalars are accessed with the .0 instance suffix."
-    REVISION     "202611040000Z"
+    REVISION     "202611110000Z"
     DESCRIPTION  "Generated from oids.json (v3.0)."
     ::= { enterprises 61123730 1 6 }
 
@@ -27,14 +27,6 @@ sfTraps              OBJECT IDENTIFIER ::= { sfNotifications 0 }
 sfTrapObjects        OBJECT IDENTIFIER ::= { sfNotifications 1 }
 
 -- Current values (read-only)
-
-sfWaterLevel OBJECT-TYPE
-    SYNTAX      Integer32
-    UNITS       "%"
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION "Water level ((제안) 0..100 %, a float switch reports 0 or 100)."
-    ::= { sfStatus 3 }
 
 sfPiTemp OBJECT-TYPE
     SYNTAX      Integer32

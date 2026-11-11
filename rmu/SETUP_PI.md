@@ -21,7 +21,7 @@ python3 rmu/rmu_check.py --host <RMU IP>            # 전체 항목: raw 값과 
 python3 rmu/rmu_check.py --host <RMU IP> --trap     # addTrap 등록 후 30초 동안 Trap 기다리기
 ```
 
-- 읽기 커뮤니티 `public`, 쓰기 커뮤니티 `private`이 기본값입니다 (`--community`, `--write-community`로 변경).
+- 읽기·쓰기 커뮤니티 모두 `public`이 기본값입니다 (실물 RMU에서 확인) (`--community`, `--write-community`로 변경).
 - 값이 이상하면 `oids.json`의 `scale`/`offset`을 고칩니다 (코드에는 숫자를 쓰지 않음).
 - Trap이 안 오면: RMU의 addTrap 값(`IP:포트`), 라즈베리파이 방화벽(UDP 1162), RMU 펌웨어가 addTrap을 지원하는지 교수님께 확인.
 
@@ -107,9 +107,9 @@ NMS에 넣을 MIB: 교수님 PELKOREA-RMU-MIB + 프로젝트 폴더의 `SMARTFAR
 
 ## 9. 실물 / 시뮬레이션 / 정보없음 (CLAUDE.md 5-2)
 
-- RMU 실물: 온도(temp1), 온도2, 습도(humidity1), 화재(fire), AC 전압·주파수(acv1·ach1), 전면 도어, UPS, 알람 코드(Trap·alarm). 설치 안 된 항목은 noSuchObject → 정보없음
+- RMU 실물: 온도(temp1), 온도2, 습도(humidity1), 화재(fire), 수위(flood), AC 전압·주파수(acv1·ach1), 전면 도어, UPS, 알람 코드(Trap·alarm). 설치 안 된 항목은 noSuchObject → 정보없음
 - 라즈베리파이 실물: CPU 온도, 환풍기 2개·쿨링팬·펌프 릴레이, (선택) 팬 회전 감지
-- 미정: 수위 (RMU OID 확인 전까지 `--rmu-host`로 실행하면 정보없음)
+- 수위: RMU flood (플로트 스위치, 0/100%). 극성이 반대면 `oids.json` water_level의 scale/offset을 100/0으로 바꾼다
 - 시뮬레이션: 에어컨, 히터, 덮개, 전구, CCTV 움직임, 온실 전체 전력, 환풍기·쿨링팬 장비 온도
 - 정보없음: CO2, 토양수분, 양분 (CO2 감지기를 RMU에 붙이면 `oids.json`의 `co2`에 `available: true`, `poll: true`)
 - 앱의 시뮬레이션은 실사용 모드에서도 동작합니다. 시뮬레이션 중인 항목은 실제 값 대신 시뮬레이션 값을 쓰고, 정상으로 돌리면 다시 실제 값을 씁니다.

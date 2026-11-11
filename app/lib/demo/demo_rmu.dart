@@ -70,6 +70,7 @@ const _rmuItems = [
   'temperature',
   'temp2',
   'humidity',
+  'water_level',
   'fire',
   'ac_voltage',
   'ac_frequency',

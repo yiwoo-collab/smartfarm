@@ -280,7 +280,7 @@ def main():
     p.add_argument("--rmu-host", help="RMU 실물 주소 (SNMP로 조회)")
     p.add_argument("--rmu-port", type=int, default=161)
     p.add_argument("--rmu-community", default="public")
-    p.add_argument("--rmu-write-community", default="private", help="addTrap 등록용 쓰기 커뮤니티")
+    p.add_argument("--rmu-write-community", default="public", help="addTrap 등록용 쓰기 커뮤니티 (실물 RMU는 public, 2026-11-11 확인)")
     p.add_argument("--trap-listen-port", type=int, default=1162, help="RMU Trap을 받을 포트")
     p.add_argument("--pi-ip", help="addTrap에 쓸 라즈베리파이 IP (기본: 자동)")
     p.add_argument("--trap-host", help="우리 farmAlarm Trap을 보낼 NMS 주소 (선택)")
@@ -307,10 +307,6 @@ def main():
     oids = oidlib.load()
     mode = args.mode or ("live" if (args.hardware or args.rmu_host) else "demo")
     unavailable = oidlib.unavailable(oids)
-    water_wired = hardware is not None and hardware.cfg["water_level"].get("enabled")
-    if args.rmu_host and not water_wired:
-        # 수위감지기를 라즈베리파이에 직접 달지 않았으면 정보없음 (가짜 값을 보여주지 않는다)
-        unavailable.add("water_level")
     rmu = RmuModel(hardware=hardware, storage=storage, unavailable=unavailable, mode=mode)
     check_oid_names(rmu)
 

@@ -164,7 +164,8 @@ void main() {
     final st = m.status();
     expect(st['states']['temperature'], 'offline');
     expect(st['states']['humidity'], 'offline'); // 습도도 RMU 항목
-    expect(st['states']['water_level'], 'ok');
+    expect(st['states']['water_level'], 'offline'); // 수위도 RMU 항목 (flood)
+    expect(st['states']['pi_temp'], 'ok'); // 라즈베리파이 항목은 그대로
     expect(st['sensors']['temperature'], frozen);
     expect(st['rmu']['connected'], false);
     expect(m.active.containsKey('temp'), isFalse);

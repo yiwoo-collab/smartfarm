@@ -135,7 +135,7 @@ class RmuLinkTest(unittest.TestCase):
         receiver = TrapReceiver(self.model, 0)
         receiver.start()
         try:
-            self.assertIsNone(register_trap("127.0.0.1", self.port, "private", "127.0.0.1", receiver.port))
+            self.assertIsNone(register_trap("127.0.0.1", self.port, "public", "127.0.0.1", receiver.port))
             self.assertIn(f"127.0.0.1:{receiver.port}", self.rmu.trap_targets)
             self.rmu.raise_alarm(61)  # UPS 배터리 낮음
             self.assertTrue(wait_until(lambda: "rmu:61" in self.model.active))
@@ -145,8 +145,8 @@ class RmuLinkTest(unittest.TestCase):
         finally:
             receiver.close()
 
-    def test_readonly_community_cannot_register(self):
-        self.assertIsNotNone(register_trap("127.0.0.1", self.port, "public", "127.0.0.1", 9999))
+    def test_wrong_community_cannot_register(self):
+        self.assertIsNotNone(register_trap("127.0.0.1", self.port, "wrong", "127.0.0.1", 9999))
 
 
 class ExtensionAgentTest(unittest.TestCase):
@@ -170,10 +170,10 @@ class ExtensionAgentTest(unittest.TestCase):
         it = iter(lines)
         return self.agent.handle(lambda: next(it))
 
-    def test_get_water_level(self):
-        result = self.run_lines("get", inst("water_level"))
+    def test_get_pi_temp(self):
+        result = self.run_lines("get", inst("pi_temp"))
         self.assertEqual(result[1], "integer")
-        self.assertAlmostEqual(int(result[2]), server.rmu.values["water_level"], delta=1)
+        self.assertAlmostEqual(int(result[2]) / 10, server.rmu.values["pi_temp"], delta=0.5)
 
     def test_nodata_not_served(self):
         self.assertEqual(self.run_lines("get", inst("co2")), ["NONE"])  # 정보없음은 값이 없다
@@ -236,7 +236,8 @@ class TrapAndHardwareTest(unittest.TestCase):
     def test_mib_has_extension_objects(self):
         text = generate(OIDS, last_updated="202601010000Z")
         self.assertIn("::= { enterprises 61123730 1 6 }", text)
-        self.assertIn("sfWaterLevel OBJECT-TYPE", text)
+        self.assertIn("sfPiTemp OBJECT-TYPE", text)
+        self.assertNotIn("sfWaterLevel OBJECT-TYPE", text)  # 수위는 RMU flood
         self.assertIn("farmAlarm NOTIFICATION-TYPE", text)
         self.assertNotIn("sfTemperature", text)  # RMU 실물 항목은 교수님 MIB에 있다
 
