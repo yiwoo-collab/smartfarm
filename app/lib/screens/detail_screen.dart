@@ -110,9 +110,10 @@ class _DetailScreenState extends State<DetailScreen> {
                 ValueTile(
                   icon: Icons.battery_std,
                   label: 'UPS 배터리',
-                  value: fmt(s.upsBattery, 0, '%'),
+                  value: s.upsBatteryLow == true ? '낮음' : '정상',
+                  valueColor: s.upsBatteryLow == true ? Colors.red : null,
                   stale: stale,
-                  state: s.stateOf('ups_battery'),
+                  state: s.stateOf('ups_battery_low'),
                 ),
                 if (power != null)
                   Text(
@@ -195,14 +196,6 @@ class _DetailScreenState extends State<DetailScreen> {
                   onTap: () => _history('temp2'),
                 ),
                 ValueTile(
-                  icon: Icons.thermostat_auto,
-                  label: displayNames['hum_temp']!,
-                  value: fmt(s.sensors['hum_temp'], 1, '℃'),
-                  stale: stale,
-                  state: s.stateOf('hum_temp'),
-                  onTap: () => _history('hum_temp'),
-                ),
-                ValueTile(
                   icon: Icons.door_front_door,
                   label: '전면 도어 (RMU)',
                   value: s.doorOpen == null ? '-' : (s.doorOpen! ? '열림' : '닫힘'),
@@ -224,7 +217,7 @@ class _DetailScreenState extends State<DetailScreen> {
         child: ListTile(
           leading: Icon(Icons.router, color: Colors.grey),
           title: Text('RMU 실물 미사용'),
-          subtitle: Text('RMU 항목(온도·전원)은 시뮬레이션 값입니다'),
+          subtitle: Text('RMU 항목(온도·습도·화재·전원)은 시뮬레이션 값입니다'),
         ),
       );
     }

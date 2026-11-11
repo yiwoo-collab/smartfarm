@@ -16,7 +16,7 @@ RECORD_SECONDS = 10       # 센서 값 기록 간격 (제안)
 KEEP_DAYS = 7             # 기록 보관 기간 (제안)
 
 # 기록하는 항목 (REST 이름). 그래프 화면에서 고를 수 있다.
-HISTORY_SENSORS = ["temperature", "temp2", "humidity", "hum_temp", "water_level", "ac_voltage",
+HISTORY_SENSORS = ["temperature", "temp2", "humidity", "water_level", "ac_voltage",
                    "greenhouse_power", "pi_temp", "main_fan_temp", "backup_fan_temp", "cooling_fan_temp",
                    "co2", "soil_moisture", "nutrient_ec", "alarm_level"]
 # v3.0에서 항목이 바뀌어 표 이름을 새로 쓴다 (예전 파일과 섞이지 않게)

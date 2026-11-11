@@ -20,7 +20,7 @@ class RmuStatus {
   final bool powerOk;
   final double? acVoltage;
   final double? acFrequency;
-  final double? upsBattery;
+  final bool? upsBatteryLow; // UPS 배터리 낮음 (RMU upsBl, null = 정보없음)
   final Map<String, double?> partTemps; // pi_temp, main_fan_temp, ...
   final bool? doorOpen;
   final bool mainFanOk;
@@ -45,7 +45,7 @@ class RmuStatus {
     required this.powerOk,
     this.acVoltage,
     this.acFrequency,
-    this.upsBattery,
+    this.upsBatteryLow,
     this.partTemps = const {},
     this.doorOpen,
     this.mainFanOk = true,
@@ -102,7 +102,7 @@ class RmuStatus {
       powerOk: (power['power_ok'] as bool?) ?? false,
       acVoltage: _num(power['ac_voltage']),
       acFrequency: _num(power['ac_frequency']),
-      upsBattery: _num(power['ups_battery']),
+      upsBatteryLow: power['ups_battery_low'] as bool?,
       partTemps: {for (final e in parts.entries) e.key: _num(e.value)},
       doorOpen: json['door_open'] as bool?,
       mainFanOk: (fans['main_ok'] as bool?) ?? true,
@@ -202,7 +202,6 @@ const displayNames = {
   'temperature': '온도',
   'temp2': '온도2 (RMU)',
   'humidity': '습도',
-  'hum_temp': '온습도감지기 온도',
   'water_level': '수위',
   'fire': '화재',
   'co2': 'CO2',

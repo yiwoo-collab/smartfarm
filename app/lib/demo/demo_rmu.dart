@@ -69,16 +69,17 @@ const _optional = ['co2', 'soil_moisture', 'nutrient_ec']; // 감지기 없음 �
 const _rmuItems = [
   'temperature',
   'temp2',
+  'humidity',
+  'fire',
   'ac_voltage',
   'ac_frequency',
   'door_front',
-  'ups_battery',
+  'ups_battery_low',
 ];
 const _sensors = [
   'temperature',
   'temp2',
   'humidity',
-  'hum_temp',
   'water_level',
   'fire',
   'ac_voltage',
@@ -90,13 +91,12 @@ const _names = {
   'temperature': '온도',
   'temp2': '온도2',
   'humidity': '습도',
-  'hum_temp': '온습도감지기 온도',
   'water_level': '수위',
   'fire': '화재',
   'ac_voltage': 'AC 전압',
   'ac_frequency': 'AC 주파수',
   'door_front': '전면 도어',
-  'ups_battery': 'UPS 배터리',
+  'ups_battery_low': 'UPS 배터리 낮음',
   'co2': 'CO2',
   'soil_moisture': '토양수분',
   'nutrient_ec': '양분(EC)',
@@ -165,15 +165,22 @@ const _rmuCodeText = <int, (int, String)>{
   1: (2, 'AC 전압 이상'),
   9: (0, '온도1 (온도 임계값 규칙으로 재판정)'),
   10: (0, '온도2 (온도 임계값 규칙으로 재판정)'),
+  13: (0, '습도 (습도 임계값 규칙으로 재판정)'),
+  20: (0, '화재 (fire 값으로 판정)'),
   21: (2, '전면 도어 열림'),
+  48: (2, 'CTR 화재 (의미 미확인)'),
+  60: (2, 'UPS 입력 전원 이상'),
   61: (2, 'UPS 배터리 낮음'),
   62: (1, 'UPS 바이패스·강압'),
-  80: (1, 'VTES 장애 (의미 미확인)'),
-  81: (1, 'CCTV 1 이상'),
-  82: (1, 'CCTV 2 이상'),
-  83: (1, 'CCTV 3 이상'),
-  84: (1, 'CCTV 4 이상'),
-  85: (1, 'CCTV 5 이상'),
+  63: (2, 'UPS 고장'),
+  66: (2, 'UPS 셧다운'),
+  80: (1, 'VTES 1 장애 (의미 미확인)'),
+  81: (1, 'VTES 2 장애 (의미 미확인)'),
+  82: (1, 'CCTV 1 이상'),
+  83: (1, 'CCTV 2 이상'),
+  84: (1, 'CCTV 3 이상'),
+  85: (1, 'CCTV 4 이상'),
+  86: (1, 'CCTV 5 이상'),
   98: (1, 'UPS 통신 장애'),
   201: (2, '습도'),
   202: (2, '수위'),
@@ -241,7 +248,6 @@ const _historySensors = [
   'temperature',
   'temp2',
   'humidity',
-  'hum_temp',
   'water_level',
   'ac_voltage',
   'greenhouse_power',
@@ -399,7 +405,7 @@ class DemoSim {
   bool leak = false;
   bool fire = false;
   bool doorOpen = false;
-  double mismatch = 0; // 온습도감지기 온도를 일부러 어긋나게
+  double mismatch = 0; // 온도2를 일부러 어긋나게
   bool stuck = false; // 온도 값 고정
   double? commLossUntil;
   Set<String> sensorFaults = {};
@@ -441,13 +447,12 @@ class DemoRmu {
     'temperature': 25.0,
     'temp2': 24.0,
     'humidity': 72.0,
-    'hum_temp': 25.0,
     'water_level': 80.0,
     'fire': 0.0,
     'ac_voltage': _defaultAc,
     'ac_frequency': 60.0,
     'door_front': 0.0,
-    'ups_battery': 100.0,
+    'ups_battery_low': 0.0,
     'pi_temp': 48.0,
     'main_fan_temp': 35.0,
     'backup_fan_temp': 28.0,
@@ -561,13 +566,12 @@ class DemoRmu {
       if (running('backup_fan')) dt -= 0.05;
       v['temperature'] = _clamp(v['temperature']! + dt, -20, 60);
     }
+    // 온도2: 같은 온실이라 온도1과 거의 같다 (불일치 시나리오면 어긋남)
     v['temp2'] = _clamp(
-      v['temp2']! + 0.1 * (v['temperature']! - 1.0 - v['temp2']!) + _rnd(-0.05, 0.05),
+      v['temp2']! + 0.1 * (v['temperature']! - 1.0 + s.mismatch - v['temp2']!) + _rnd(-0.05, 0.05),
       -20,
       60,
     );
-    // 온습도감지기 온도: 같은 온실이라 RMU 온도와 거의 같다 (불일치 시나리오면 어긋남)
-    v['hum_temp'] = v['temperature']! + s.mismatch + _rnd(-0.2, 0.2);
 
     for (final p in _parts) {
       final base = p == 'pi_temp'
@@ -733,10 +737,10 @@ class DemoRmu {
       'pending': _pendingCount(),
     };
 
-    // --- 2) 센서 불일치: RMU 온도 vs 온습도감지기 온도 ---
+    // --- 2) 센서 불일치: RMU 온도1 vs 온도2 ---
     if (usable('temperature') &&
-        usable('hum_temp') &&
-        (temp - values['hum_temp']!).abs() > th['sensor_mismatch']!) {
+        usable('temp2') &&
+        (temp - values['temp2']!).abs() > th['sensor_mismatch']!) {
       _mismatchSince ??= ts;
     } else {
       _mismatchSince = null;
@@ -999,15 +1003,15 @@ class DemoRmu {
 
     // 센서 불일치·값 고정 (AI, 209 주의)
     if (_mismatchSince != null && ts - _mismatchSince! >= _mismatchSeconds) {
-      final diff = v['temperature']! - v['hum_temp']!;
+      final diff = v['temperature']! - v['temp2']!;
       add(
         'mismatch',
         1,
         209,
-        '센서 불일치 의심: RMU 온도와 온습도감지기 온도 차이 ${_f(diff.abs(), 1)}℃',
+        '센서 불일치 의심: 온도1과 온도2 차이 ${_f(diff.abs(), 1)}℃',
         [
           '판단 이유: $_mismatchSeconds초 넘게 차이가 ${_f(th['sensor_mismatch']!, 1)}℃보다 큽니다 '
-              '(RMU ${_f(v['temperature']!, 1)}℃, 온습도감지기 ${_f(v['hum_temp']!, 1)}℃)',
+              '(온도1 ${_f(v['temperature']!, 1)}℃, 온도2 ${_f(v['temp2']!, 1)}℃)',
           '두 감지기 위치와 배선을 확인하세요',
         ],
         true,
@@ -1026,9 +1030,9 @@ class DemoRmu {
 
     // RMU가 알려 준 그 밖의 알람 코드 (Trap 또는 alarm 스칼라)
     for (final code in rmuAlarms.keys.toList()..sort()) {
-      if (const [1, 9, 10, 21].contains(code)) continue; // 값으로 직접 판정하는 항목
+      if (const [1, 9, 10, 13, 20, 21].contains(code)) continue; // 값으로 직접 판정하는 항목
       final info = _rmuCodeText[code];
-      if (info != null) {
+      if (info != null && info.$1 > 0) {
         add('rmu:$code', info.$1, code, '${info.$2} (RMU 알람 $code)', ['RMU 장비를 확인하세요']);
       }
     }
@@ -1307,11 +1311,12 @@ class DemoRmu {
   Map<String, dynamic> _powerSummary() {
     final th = thresholds;
     final ac = _val('ac_voltage', 1); // RMU 두절이면 마지막 수신값, 정보없음·오류면 null
+    final upsLow = _val('ups_battery_low', 0);
     return {
       'ac_voltage': ac,
       'ac_frequency': _val('ac_frequency', 1),
       'power_ok': !powerDown() && ac != null && th['ac_voltage_low']! <= ac && ac <= th['ac_voltage_high']!,
-      'ups_battery': _val('ups_battery', 0),
+      'ups_battery_low': upsLow == null ? null : upsLow >= 1,
       'greenhouse_power': greenhousePower(),
     };
   }
@@ -1324,13 +1329,12 @@ class DemoRmu {
         'temperature',
         'temp2',
         'humidity',
-        'hum_temp',
         'water_level',
         'fire',
         'ac_voltage',
         'ac_frequency',
         'door_front',
-        'ups_battery',
+        'ups_battery_low',
         ..._parts,
         ..._optional,
       ])
@@ -1352,7 +1356,6 @@ class DemoRmu {
         'temperature': _val('temperature', 1),
         'temp2': _val('temp2', 1),
         'humidity': _val('humidity', 1),
-        'hum_temp': _val('hum_temp', 1),
         'water_level': _val('water_level', 0),
         'fire': fire == null ? null : fire >= 1,
         'co2': _val('co2', 0),
@@ -1654,7 +1657,7 @@ class DemoRmu {
           s.rmuOfflineSince = now;
           s.rmuFrozen = {for (final n in _rmuItems) n: values[n]!};
         }
-        return 'RMU 통신 두절 흉내: RMU 항목(온도·전원)은 마지막 값을 회색으로 표시';
+        return 'RMU 통신 두절 흉내: RMU 항목(온도·습도·화재·전원)은 마지막 값을 회색으로 표시';
       case 'rmu_online':
         s.rmuOffline = false;
         s.rmuFrozen = {};
@@ -1673,7 +1676,7 @@ class DemoRmu {
         return '센서 오류 해제';
       case 'sensor_mismatch':
         s.mismatch = 5.0;
-        return '온습도감지기 온도가 RMU 온도와 5℃ 어긋납니다 (30초 뒤 AI 불일치 판단)';
+        return '온도2가 온도1과 어긋납니다 (잠시 뒤 AI 불일치 판단)';
       case 'sensor_match':
         s.mismatch = 0.0;
         return '센서 불일치 해제';

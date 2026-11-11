@@ -16,8 +16,6 @@ import oids as oidlib
 from snmp_lite import SnmpClient, SnmpError, decode_message, TRAP_V2, SNMP_TRAP_OID
 
 POLL_SECONDS = 5
-# 주기적으로 읽는 RMU 항목 (oids.json name)
-POLL_NAMES = ["ac_voltage", "ac_frequency", "temperature", "temp2", "door_front", "rmu_alarm", "ups_battery"]
 
 
 def local_ip_for(host):
@@ -36,8 +34,7 @@ class RmuPoller:
         self.client = SnmpClient(host, port, community)
         self.interval = interval
         self.oids = oidlib.load()
-        objs = oidlib.by_name(self.oids)
-        self.items = [objs[n] for n in POLL_NAMES]
+        self.items = oidlib.poll_objects(self.oids)  # 읽을 항목은 oids.json의 poll로 정한다
         self.last_alarm = 0
         self._stop = threading.Event()
         self._kick = threading.Event()
@@ -51,11 +48,15 @@ class RmuPoller:
             self.model.set_rmu_offline()
             print(f"[rmu] 조회 실패: {e}")
             return False
-        values = {}
+        values, absent = {}, set()
         for obj in self.items:
-            values[obj["name"]] = oidlib.to_value(raw.get(obj["oid"].strip(".") + ".0"), obj)
-        alarm = values.pop("rmu_alarm")
-        self.model.set_external(values, "rmu")
+            value = oidlib.to_value(raw.get(obj["oid"].strip(".") + ".0"), obj)
+            if value is None:
+                absent.add(obj["name"])  # noSuchObject: 이 현장에 설치되지 않은 항목 → 정보없음
+            else:
+                values[obj["name"]] = value
+        alarm = values.pop("rmu_alarm", None)
+        self.model.set_external(values, "rmu", absent)
         # alarm 스칼라가 바뀌면 알람으로 처리 (Trap을 놓쳤을 때 대비)
         if alarm is not None and int(alarm) != self.last_alarm:
             self.last_alarm = int(alarm)

@@ -36,9 +36,10 @@ class MockRmu:
         self.trap_oid = oids["rmu_trap"]["oid"].strip(".")
         # MIB 원시값 (temp1 = 25.0℃ → 750, acv1 = 220.0V → 2200)
         self.raw = {
-            "acv1": 2200, "ach1": 600, "temp1": 750, "temp2": 740, "doorFront": 0, "alarm": 0,
+            "acv1": 2200, "ach1": 600, "temp1": 750, "temp2": 740, "humidity1": 720, "fire": 1,
+            "doorFront": 0, "alarm": 0,
             "setAcv1Uvt": 1980, "setAcv1Ovt": 2420, "setTempU": 450, "setTempO": 1000,
-            "upsIpv": 2200, "upsOpv": 2200, "upsOpc": 12, "upsBl": 100, "upsBb": 0, "upsBz": 0,
+            "upsIpv": 2200, "upsOpv": 2200, "upsOpc": 12, "upsBl": 0, "upsBb": 0, "upsBz": 0,
             "upsShutdown": "", "addTrap": "",
         }
         self.trap_targets = set()
@@ -50,6 +51,7 @@ class MockRmu:
             # 실제 온도처럼 천천히: 25.0℃(750)로 돌아가며 ±0.1℃ 정도만 흔들린다
             self.raw["temp1"] += int(round(0.1 * (750 - self.raw["temp1"]) + random.uniform(-1, 1)))
             self.raw["temp2"] = self.raw["temp1"] - 10 + random.randint(-2, 2)
+            self.raw["humidity1"] += int(round(0.1 * (720 - self.raw["humidity1"]) + random.uniform(-3, 3)))
             self.raw["acv1"] = 2200 + random.randint(-15, 15)
             self.raw["ach1"] = 600 + random.randint(-1, 1)
 

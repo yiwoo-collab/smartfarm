@@ -26,6 +26,11 @@ def objects(oids, source=None, group=None):
             if (source is None or o["source"] == source) and (group is None or o["group"] == group)]
 
 
+def poll_objects(oids):
+    """RMU에서 주기적으로 읽는 항목 (poll이 true이고 감지기가 연결된 것)"""
+    return [o for o in oids["objects"] if o.get("poll") and o.get("available", True)]
+
+
 def by_name(oids):
     return {o["name"]: o for o in oids["objects"]}
 

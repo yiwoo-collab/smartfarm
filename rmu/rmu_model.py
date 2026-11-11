@@ -68,14 +68,15 @@ MAX_EVENTS = 500
 
 PARTS = ["pi_temp", "main_fan_temp", "backup_fan_temp", "cooling_fan_temp"]
 OPTIONAL = ["co2", "soil_moisture", "nutrient_ec"]          # 감지기 연결 시에만 (기본 정보없음)
-RMU_ITEMS = ["temperature", "temp2", "ac_voltage", "ac_frequency", "door_front", "ups_battery"]
-SENSORS = ["temperature", "temp2", "humidity", "hum_temp", "water_level", "fire",
+# RMU에서 읽는 항목 (oids.json의 poll과 같다). 두절되면 이 항목들만 회색으로 표시한다.
+RMU_ITEMS = ["temperature", "temp2", "humidity", "fire", "ac_voltage", "ac_frequency", "door_front", "ups_battery_low"]
+SENSORS = ["temperature", "temp2", "humidity", "water_level", "fire",
            "ac_voltage", *PARTS, *OPTIONAL]                  # 센서 오류를 흉내 낼 수 있는 항목
 
 NAMES = {
-    "temperature": "온도", "temp2": "온도2", "humidity": "습도", "hum_temp": "온습도감지기 온도",
+    "temperature": "온도", "temp2": "온도2", "humidity": "습도",
     "water_level": "수위", "fire": "화재", "ac_voltage": "AC 전압", "ac_frequency": "AC 주파수",
-    "door_front": "전면 도어", "ups_battery": "UPS 배터리",
+    "door_front": "전면 도어", "ups_battery_low": "UPS 배터리 낮음",
     "co2": "CO2", "soil_moisture": "토양수분", "nutrient_ec": "양분(EC)",
     "pi_temp": "라즈베리파이 온도", "main_fan_temp": "메인 환풍기 온도",
     "backup_fan_temp": "예비 환풍기 온도", "cooling_fan_temp": "쿨링팬 온도",
@@ -167,7 +168,7 @@ class Sim:
         self.leak = False
         self.fire = False
         self.door_open = False
-        self.mismatch = 0.0           # 온습도감지기 온도를 일부러 어긋나게
+        self.mismatch = 0.0           # 온도2를 일부러 어긋나게
         self.stuck = False            # 온도 값 고정
         self.comm_loss_until = None
         self.sensor_faults = set()
@@ -192,9 +193,9 @@ class RmuModel:
 
         # 시뮬레이션 세계 (데모 모드 값, 실사용 모드에서도 시뮬레이션 장치 값)
         self.values = {
-            "temperature": 25.0, "temp2": 24.0, "humidity": 72.0, "hum_temp": 25.0,
+            "temperature": 25.0, "temp2": 24.0, "humidity": 72.0,
             "water_level": 80.0, "fire": 0.0, "ac_voltage": DEFAULT_AC, "ac_frequency": 60.0,
-            "door_front": 0.0, "ups_battery": 100.0,
+            "door_front": 0.0, "ups_battery_low": 0.0,
             "pi_temp": 48.0, "main_fan_temp": 35.0, "backup_fan_temp": 28.0, "cooling_fan_temp": 28.0,
             "co2": 450.0, "soil_moisture": 45.0, "nutrient_ec": 1.8,
         }
@@ -204,6 +205,7 @@ class RmuModel:
         self.rmu_connected = None        # 마지막 조회 성공 여부
         self.rmu_last_seen = None
         self.rmu_alarms = {}             # RMU가 알린 알람 코드 → 받은 시각 (Trap 또는 alarm 스칼라)
+        self.rmu_absent = set()          # RMU가 noSuchObject로 답한 항목 (이 현장에 설치 안 됨)
         self.hw_faults = set()
         self.hw_fan_failed = {}          # 실물 팬 회전 감지 결과 (hardware.fan_failures)
 
@@ -267,7 +269,7 @@ class RmuModel:
         if s.heat or s.stuck:
             names.add("temperature")
         if s.mismatch:
-            names.add("hum_temp")
+            names.add("temp2")
         if s.power_cut or s.ac_base != DEFAULT_AC:
             names.update(["ac_voltage", "ac_frequency"])
         if s.leak or s.water_target != 80.0:
@@ -279,13 +281,15 @@ class RmuModel:
         names.update(p for p, load in s.part_load.items() if load)
         return names
 
-    def set_external(self, readings, source):
-        """실제 값 받기. source: 'rmu' 또는 'pi'. 값이 None이면 그 항목은 읽기 실패."""
+    def set_external(self, readings, source, absent=()):
+        """실제 값 받기. source: 'rmu' 또는 'pi'. 값이 None이면 그 항목은 읽기 실패.
+        absent: RMU가 noSuchObject로 답한 항목 (설치되지 않아 정보없음)"""
         with self.lock:
             now = datetime.now()
             for name, value in readings.items():
                 self.external[name] = value
             if source == "rmu":
+                self.rmu_absent = set(absent)
                 self.rmu_connected = True
                 self.rmu_last_seen = now
 
@@ -309,7 +313,7 @@ class RmuModel:
 
     def item_state(self, name):
         """ok / nodata / fault / offline (CLAUDE.md 3장 정보없음 규칙)"""
-        if name in self.unavailable:
+        if name in self.unavailable or (self.mode == "live" and name in self.rmu_absent):
             return "nodata"
         if name in self.sensor_faults():
             return "fault"
@@ -360,9 +364,8 @@ class RmuModel:
             if self.running("backup_fan"):
                 dt -= 0.05
             v["temperature"] = clamp(v["temperature"] + dt, -20, 60)
-        v["temp2"] = clamp(v["temp2"] + 0.1 * (v["temperature"] - 1.0 - v["temp2"]) + random.uniform(-0.05, 0.05), -20, 60)
-        # 온습도감지기 온도: 같은 온실이라 RMU 온도와 거의 같다 (불일치 시나리오면 어긋남)
-        v["hum_temp"] = v["temperature"] + s.mismatch + random.uniform(-0.2, 0.2)
+        # 온도2: 같은 온실이라 온도1과 거의 같다 (불일치 시나리오면 어긋남)
+        v["temp2"] = clamp(v["temp2"] + 0.1 * (v["temperature"] - 1.0 + s.mismatch - v["temp2"]) + random.uniform(-0.05, 0.05), -20, 60)
 
         for p in PARTS:
             if p == "pi_temp":
@@ -494,9 +497,9 @@ class RmuModel:
                    "eta_seconds": None if eta is None else round(eta),
                    "pending": sum(1 for s in self.suggestions if s["status"] == "pending")}
 
-        # --- 2) 센서 불일치: RMU 온도 vs 온습도감지기 온도 ---
-        if self.usable("temperature") and self.usable("hum_temp") \
-                and abs(temp - self.values["hum_temp"]) > th["sensor_mismatch"]:
+        # --- 2) 센서 불일치: RMU 온도1 vs 온도2 ---
+        if self.usable("temperature") and self.usable("temp2") \
+                and abs(temp - self.values["temp2"]) > th["sensor_mismatch"]:
             self.mismatch_since = self.mismatch_since or ts
         else:
             self.mismatch_since = None
@@ -705,10 +708,10 @@ class RmuModel:
 
         # 센서 불일치·값 고정 (AI, 209 주의)
         if self.mismatch_since is not None and ts - self.mismatch_since >= MISMATCH_SECONDS:
-            diff = v["temperature"] - v["hum_temp"]
-            add("mismatch", 1, 209, f"센서 불일치 의심: RMU 온도와 온습도감지기 온도 차이 {abs(diff):.1f}℃",
+            diff = v["temperature"] - v["temp2"]
+            add("mismatch", 1, 209, f"센서 불일치 의심: 온도1과 온도2 차이 {abs(diff):.1f}℃",
                 [f"판단 이유: {MISMATCH_SECONDS}초 넘게 차이가 {th['sensor_mismatch']:.1f}℃보다 큽니다 "
-                 f"(RMU {v['temperature']:.1f}℃, 온습도감지기 {v['hum_temp']:.1f}℃)",
+                 f"(온도1 {v['temperature']:.1f}℃, 온도2 {v['temp2']:.1f}℃)",
                  "두 감지기 위치와 배선을 확인하세요"], ai=True)
         if self.stuck_since is not None and ts - self.stuck_since >= STUCK_SECONDS:
             add("stuck", 1, 209, f"센서 고장 의심: 온도가 {STUCK_SECONDS // 60}분 넘게 {v['temperature']:.1f}℃로 고정",
@@ -716,10 +719,10 @@ class RmuModel:
 
         # RMU가 알려 준 그 밖의 알람 코드 (Trap 또는 alarm 스칼라)
         for code in sorted(self.rmu_alarms):
-            if code in (1, 9, 10, 21):
+            if code in (1, 9, 10, 13, 20, 21):
                 continue  # 값으로 직접 판정하는 항목
             info = RMU_CODE_TEXT.get(code)
-            if info:
+            if info and info[0] > 0:
                 add(f"rmu:{code}", info[0], code, f"{info[1]} (RMU 알람 {code})", ["RMU 장비를 확인하세요"])
         return cond
 
@@ -883,6 +886,10 @@ class RmuModel:
             return round(self.sim.rmu_frozen[name], digits)  # 마지막 수신값
         return round(self.values[name], digits) if state in ("ok", "offline") else None
 
+    def _ups_low(self):
+        low = self._val("ups_battery_low", 0)
+        return None if low is None else low >= 1
+
     def _rmu_link(self):
         """라즈베리파이 ↔ RMU 연결 상태 (시뮬레이션 두절 포함)"""
         used = (self.rmu_used and self.mode == "live") or self.sim.rmu_offline
@@ -899,8 +906,8 @@ class RmuModel:
         with self.lock:
             top = self._top()
             states = {n: self.item_state(n) for n in
-                      ["temperature", "temp2", "humidity", "hum_temp", "water_level", "fire",
-                       "ac_voltage", "ac_frequency", "door_front", "ups_battery", *PARTS, *OPTIONAL]}
+                      ["temperature", "temp2", "humidity", "water_level", "fire",
+                       "ac_voltage", "ac_frequency", "door_front", "ups_battery_low", *PARTS, *OPTIONAL]}
             fire = self._val("fire", 0)
             door = self._val("door_front", 0)
             return {
@@ -916,7 +923,6 @@ class RmuModel:
                     "temperature": self._val("temperature", 1),
                     "temp2": self._val("temp2", 1),
                     "humidity": self._val("humidity", 1),
-                    "hum_temp": self._val("hum_temp", 1),
                     "water_level": self._val("water_level", 0),
                     "fire": None if fire is None else fire >= 1,
                     "co2": self._val("co2", 0),
@@ -944,7 +950,7 @@ class RmuModel:
             "ac_frequency": self._val("ac_frequency", 1),
             "power_ok": (not self.power_down() and ac is not None
                          and th["ac_voltage_low"] <= ac <= th["ac_voltage_high"]),
-            "ups_battery": self._val("ups_battery", 0),
+            "ups_battery_low": self._ups_low(),
             "greenhouse_power": self.greenhouse_power(),
         }
 
@@ -1209,7 +1215,7 @@ class RmuModel:
                     s.rmu_offline = True
                     s.rmu_offline_since = now
                     s.rmu_frozen = {n: self.values[n] for n in RMU_ITEMS}
-                return "RMU 통신 두절 흉내: RMU 항목(온도·전원)은 마지막 값을 회색으로 표시"
+                return "RMU 통신 두절 흉내: RMU 항목(온도·습도·화재·전원)은 마지막 값을 회색으로 표시"
             if name == "rmu_online":
                 s.rmu_offline, s.rmu_frozen, s.rmu_offline_since = False, {}, None
                 return "RMU 통신 복구"
@@ -1227,7 +1233,7 @@ class RmuModel:
                 return "센서 오류 해제"
             if name == "sensor_mismatch":
                 s.mismatch = 5.0
-                return "온습도감지기 온도가 RMU 온도와 5℃ 어긋납니다 (30초 뒤 AI 불일치 판단)"
+                return "온도2가 온도1과 어긋납니다 (잠시 뒤 AI 불일치 판단)"
             if name == "sensor_match":
                 s.mismatch = 0.0
                 return "센서 불일치 해제"

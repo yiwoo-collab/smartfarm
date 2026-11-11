@@ -192,7 +192,8 @@ class ScenarioTest(unittest.TestCase):
         self.run_ticks(60)
         st = self.m.status()
         self.assertEqual(st["states"]["temperature"], "offline")
-        self.assertEqual(st["states"]["humidity"], "ok")
+        self.assertEqual(st["states"]["humidity"], "offline")  # 습도도 RMU 항목
+        self.assertEqual(st["states"]["water_level"], "ok")
         self.assertEqual(st["sensors"]["temperature"], frozen)
         self.assertEqual(st["rmu"]["connected"], False)
         self.assertNotIn("temp", self.m.active)  # 두절된 값으로 판정하지 않는다

@@ -54,6 +54,7 @@ tokens = set()
 admin = dict(MOCK_ADMIN)
 push_sender = None
 hardware = None
+PI_NAMES = {o["name"] for o in oidlib.objects(oidlib.load(), source="pi")}
 poller = None
 
 
@@ -236,7 +237,9 @@ class Handler(BaseHTTPRequestHandler):
 def tick_loop():
     while True:
         if hardware is not None:
-            rmu.set_external(hardware.read(), "pi")  # 라즈베리파이 직결 감지기
+            # 라즈베리파이에서 나는 값만 받는다 (감지기는 RMU로 연결, oids.json의 source)
+            readings = hardware.read()
+            rmu.set_external({k: v for k, v in readings.items() if k in PI_NAMES}, "pi")
             rmu.hw_fan_failed = hardware.fan_failures(rmu.control)
         rmu.tick()
         if push_sender is not None:
@@ -303,7 +306,12 @@ def main():
 
     oids = oidlib.load()
     mode = args.mode or ("live" if (args.hardware or args.rmu_host) else "demo")
-    rmu = RmuModel(hardware=hardware, storage=storage, unavailable=oidlib.unavailable(oids), mode=mode)
+    unavailable = oidlib.unavailable(oids)
+    water_wired = hardware is not None and hardware.cfg["water_level"].get("enabled")
+    if args.rmu_host and not water_wired:
+        # 수위감지기를 라즈베리파이에 직접 달지 않았으면 정보없음 (가짜 값을 보여주지 않는다)
+        unavailable.add("water_level")
+    rmu = RmuModel(hardware=hardware, storage=storage, unavailable=unavailable, mode=mode)
     check_oid_names(rmu)
 
     admin = load_admin()

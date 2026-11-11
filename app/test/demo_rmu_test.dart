@@ -163,7 +163,8 @@ void main() {
     ticks(60);
     final st = m.status();
     expect(st['states']['temperature'], 'offline');
-    expect(st['states']['humidity'], 'ok');
+    expect(st['states']['humidity'], 'offline'); // 습도도 RMU 항목
+    expect(st['states']['water_level'], 'ok');
     expect(st['sensors']['temperature'], frozen);
     expect(st['rmu']['connected'], false);
     expect(m.active.containsKey('temp'), isFalse);

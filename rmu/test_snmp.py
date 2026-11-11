@@ -53,6 +53,9 @@ class CodecTest(unittest.TestCase):
         self.assertEqual(oidlib.to_value(2215, OBJ["ac_voltage"]), 221.5)
         self.assertEqual(oidlib.to_raw(25.3, OBJ["temperature"]), 753)
         self.assertEqual(oidlib.to_raw(72.5, OBJ["humidity"]), 725)
+        # fire: 원시값 0 = 화재 (scale −1, offset 1로 뒤집는다)
+        self.assertEqual(oidlib.to_value(0, OBJ["fire"]), 1)
+        self.assertEqual(oidlib.to_value(1, OBJ["fire"]), 0)
 
     def test_alarm_codes(self):
         self.assertEqual(oidlib.alarm_code_info(OIDS, 61)["level"], 2)
@@ -73,6 +76,31 @@ class RmuLinkTest(unittest.TestCase):
 
     def tearDown(self):
         self.sock.close()
+
+    def test_sensors_come_from_rmu(self):
+        # 감지기는 전부 RMU: 습도·화재를 RMU에서 읽는다. fire는 원시값 0 = 화재
+        self.rmu.raw["humidity1"] = 655
+        self.rmu.raw["fire"] = 0
+        self.assertTrue(self.poller.poll_once())
+        self.model.tick()
+        st = self.model.status()
+        self.assertEqual(st["sensors"]["humidity"], 65.5)
+        self.assertTrue(st["sensors"]["fire"])
+        self.assertIn("fire", self.model.active)
+        self.rmu.raw["fire"] = 1
+        self.poller.poll_once()
+        self.model.tick()
+        self.assertFalse(self.model.status()["sensors"]["fire"])
+
+    def test_not_installed_is_nodata(self):
+        # 이 현장에 없는 항목은 RMU가 noSuchObject로 답한다 → 센서 오류가 아니라 정보없음
+        del self.rmu.by_mib["humidity1"]
+        self.assertTrue(self.poller.poll_once())
+        self.model.tick()
+        st = self.model.status()
+        self.assertEqual(st["states"]["humidity"], "nodata")
+        self.assertIsNone(st["sensors"]["humidity"])
+        self.assertEqual(st["states"]["temperature"], "ok")
 
     def test_poll_converts_values(self):
         self.rmu.raw["temp1"] = 800  # 30.0℃
@@ -142,10 +170,10 @@ class ExtensionAgentTest(unittest.TestCase):
         it = iter(lines)
         return self.agent.handle(lambda: next(it))
 
-    def test_get_humidity(self):
-        result = self.run_lines("get", inst("humidity"))
+    def test_get_water_level(self):
+        result = self.run_lines("get", inst("water_level"))
         self.assertEqual(result[1], "integer")
-        self.assertAlmostEqual(int(result[2]) / 10, server.rmu.values["humidity"], delta=1)
+        self.assertAlmostEqual(int(result[2]), server.rmu.values["water_level"], delta=1)
 
     def test_nodata_not_served(self):
         self.assertEqual(self.run_lines("get", inst("co2")), ["NONE"])  # 정보없음은 값이 없다
@@ -208,7 +236,7 @@ class TrapAndHardwareTest(unittest.TestCase):
     def test_mib_has_extension_objects(self):
         text = generate(OIDS, last_updated="202601010000Z")
         self.assertIn("::= { enterprises 61123730 1 6 }", text)
-        self.assertIn("sfHumidity OBJECT-TYPE", text)
+        self.assertIn("sfWaterLevel OBJECT-TYPE", text)
         self.assertIn("farmAlarm NOTIFICATION-TYPE", text)
         self.assertNotIn("sfTemperature", text)  # RMU 실물 항목은 교수님 MIB에 있다
 

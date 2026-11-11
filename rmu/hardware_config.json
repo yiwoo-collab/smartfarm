@@ -1,19 +1,19 @@
 {
-  "_comment": "라즈베리파이 직결 감지기·릴레이 설정 (제안 값, CLAUDE.md 9장). 실제 배선과 출력 형식이 정해지면 바꾸세요. 핀 번호는 BCM. enabled가 false인 항목은 읽지 않습니다 (데모 모드는 항상 시뮬레이션).",
+  "_comment": "감지기는 전부 RMU에 연결하므로 라즈베리파이 직결 감지기는 꺼 둔다 (CPU 온도·릴레이만 사용). 라즈베리파이 직결 감지기·릴레이 설정 (제안 값, CLAUDE.md 9장). 실제 배선과 출력 형식이 정해지면 바꾸세요. 핀 번호는 BCM. enabled가 false인 항목은 읽지 않습니다 (데모 모드는 항상 시뮬레이션).",
 
   "humidity_sensor": {
     "_comment": "온습도감지기. type: bme280 (I2C) 또는 dht22 (GPIO). 연결 방식 확인 필요.",
-    "enabled": true, "type": "bme280", "address": "0x76", "pin": 4
+    "enabled": false, "type": "bme280", "address": "0x76", "pin": 4
   },
 
   "fire_sensor": {
     "_comment": "화재감지기 접점 출력 (제안). active_low가 true면 LOW일 때 화재.",
-    "enabled": true, "pin": 5, "active_low": true
+    "enabled": false, "pin": 5, "active_low": true
   },
 
   "water_level": {
-    "_comment": "수위감지기. mode: digital (플로트 스위치: 물이 있으면 100, 없으면 0) 또는 analog (ADS1115로 0~100% 환산). 출력 형식·의미 확인 필요.",
-    "enabled": true, "mode": "digital", "pin": 6, "active_low": false,
+    "_comment": "수위감지기. 2026-11-11: RMU용 플로트를 점퍼선으로 GPIO5(29번 핀)·GND(30번 핀)에 연결 (31번에서는 반응이 없어 29번 사용, 그래서 화재 입력은 끔). 물이 차면 접점이 붙음(LOW) → active_low true → 100, 없으면 0. mode: digital 또는 analog (ADS1115로 0~100% 환산).",
+    "enabled": true, "mode": "digital", "pin": 5, "active_low": true,
     "ads1115_address": "0x48", "channel": 0, "empty_raw": 2000, "full_raw": 26000
   },
 

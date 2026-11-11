@@ -315,7 +315,7 @@ class FarmStatusView extends StatelessWidget {
             leading: const Icon(Icons.router, color: Colors.grey),
             title: const Text('RMU 통신 두절'),
             subtitle: Text(
-              'RMU 항목(온도·전원)은 마지막 값을 회색으로 표시합니다'
+              'RMU 항목(온도·습도·화재·전원)은 마지막 값을 회색으로 표시합니다'
               '${s.rmu.lastSeen != null ? ' · 마지막 수신 ${formatTime(s.rmu.lastSeen!)}' : ''}',
             ),
           ),

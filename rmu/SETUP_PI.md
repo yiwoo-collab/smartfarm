@@ -25,7 +25,9 @@ python3 rmu/rmu_check.py --host <RMU IP> --trap     # addTrap 등록 후 30초 �
 - 값이 이상하면 `oids.json`의 `scale`/`offset`을 고칩니다 (코드에는 숫자를 쓰지 않음).
 - Trap이 안 오면: RMU의 addTrap 값(`IP:포트`), 라즈베리파이 방화벽(UDP 1162), RMU 펌웨어가 addTrap을 지원하는지 교수님께 확인.
 
-## 2. 직결 감지기 배선 (제안, `hardware_config.json`에서 변경)
+## 2. 릴레이 배선 (제안, `hardware_config.json`에서 변경)
+
+**감지기는 전부 RMU에 연결한다** (2026-11 확정). 아래 표의 감지기 항목은 `hardware_config.json`에서 꺼 두었고, 라즈베리파이에서는 CPU 온도와 릴레이만 쓴다. 감지기를 라즈베리파이에 직접 연결해야 할 때만 다시 켠다.
 
 | 장치 | 연결 | 비고 |
 |---|---|---|
@@ -36,7 +38,6 @@ python3 rmu/rmu_check.py --host <RMU IP> --trap     # addTrap 등록 후 30초 �
 | 릴레이: 메인 환풍기 / 예비 환풍기 / 쿨링팬 / 펌프 | GPIO 17 / 27 / 22 / 23 (BCM) | 팬·펌프는 **외부 전원**. 220V 기기는 연결하지 않는다 |
 | (선택) 팬 회전 신호 | `fan_tach.pins` | 3선/4선 팬만. 없으면 null |
 
-온도(temp1)와 전원(acv1·ach1)은 **RMU 쪽 감지기**라 라즈베리파이에 배선하지 않습니다.
 
 ## 3. 설치
 
@@ -106,10 +107,11 @@ NMS에 넣을 MIB: 교수님 PELKOREA-RMU-MIB + 프로젝트 폴더의 `SMARTFAR
 
 ## 9. 실물 / 시뮬레이션 / 정보없음 (CLAUDE.md 5-2)
 
-- RMU 실물: 온도(temp1), 온도2, AC 전압·주파수(acv1·ach1), 전면 도어, UPS, 알람 코드(Trap·alarm)
-- 라즈베리파이 실물: 습도(+온습도감지기 온도), 화재, 수위, CPU 온도, 환풍기 2개·쿨링팬·펌프 릴레이, (선택) 팬 회전 감지
+- RMU 실물: 온도(temp1), 온도2, 습도(humidity1), 화재(fire), AC 전압·주파수(acv1·ach1), 전면 도어, UPS, 알람 코드(Trap·alarm). 설치 안 된 항목은 noSuchObject → 정보없음
+- 라즈베리파이 실물: CPU 온도, 환풍기 2개·쿨링팬·펌프 릴레이, (선택) 팬 회전 감지
+- 미정: 수위 (RMU OID 확인 전까지 `--rmu-host`로 실행하면 정보없음)
 - 시뮬레이션: 에어컨, 히터, 덮개, 전구, CCTV 움직임, 온실 전체 전력, 환풍기·쿨링팬 장비 온도
-- 정보없음: CO2, 토양수분, 양분 (감지기를 붙이면 `oids.json`의 `available`을 true로)
+- 정보없음: CO2, 토양수분, 양분 (CO2 감지기를 RMU에 붙이면 `oids.json`의 `co2`에 `available: true`, `poll: true`)
 - 앱의 시뮬레이션은 실사용 모드에서도 동작합니다. 시뮬레이션 중인 항목은 실제 값 대신 시뮬레이션 값을 쓰고, 정상으로 돌리면 다시 실제 값을 씁니다.
 
 ## PC에서 미리 연습 (RMU 없이)

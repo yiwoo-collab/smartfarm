@@ -10,12 +10,12 @@ IMPORTS
         FROM SNMPv2-TC;
 
 smartfarmExt MODULE-IDENTITY
-    LAST-UPDATED "202610140000Z"
+    LAST-UPDATED "202611040000Z"
     ORGANIZATION "Smartfarm Capstone Team"
     CONTACT-INFO "Smartfarm Capstone Team"
     DESCRIPTION  "Smartfarm items provided by the Raspberry Pi gateway.
                   Scalars are accessed with the .0 instance suffix."
-    REVISION     "202610140000Z"
+    REVISION     "202611040000Z"
     DESCRIPTION  "Generated from oids.json (v3.0)."
     ::= { enterprises 61123730 1 6 }
 
@@ -28,22 +28,6 @@ sfTrapObjects        OBJECT IDENTIFIER ::= { sfNotifications 1 }
 
 -- Current values (read-only)
 
-sfHumidity OBJECT-TYPE
-    SYNTAX      Integer32
-    UNITS       "% (value x 10)"
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION "Humidity (temperature-humidity sensor on the Pi)."
-    ::= { sfStatus 1 }
-
-sfHumTemp OBJECT-TYPE
-    SYNTAX      Integer32
-    UNITS       "C (value x 10)"
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION "Temperature from the humidity sensor (for sensor mismatch check)."
-    ::= { sfStatus 2 }
-
 sfWaterLevel OBJECT-TYPE
     SYNTAX      Integer32
     UNITS       "%"
@@ -51,13 +35,6 @@ sfWaterLevel OBJECT-TYPE
     STATUS      current
     DESCRIPTION "Water level ((제안) 0..100 %, a float switch reports 0 or 100)."
     ::= { sfStatus 3 }
-
-sfFire OBJECT-TYPE
-    SYNTAX      Integer32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION "Fire detector (0 = normal, 1 = fire)."
-    ::= { sfStatus 4 }
 
 sfPiTemp OBJECT-TYPE
     SYNTAX      Integer32
@@ -98,14 +75,6 @@ sfGreenhousePower OBJECT-TYPE
     STATUS      current
     DESCRIPTION "Total greenhouse power (simulated)."
     ::= { sfStatus 9 }
-
-sfCo2 OBJECT-TYPE
-    SYNTAX      Integer32
-    UNITS       "ppm"
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION "CO2 (no sensor: nodata). Not connected: no data."
-    ::= { sfStatus 10 }
 
 sfSoilMoisture OBJECT-TYPE
     SYNTAX      Integer32
@@ -240,7 +209,7 @@ sfSensorMismatch OBJECT-TYPE
     UNITS       "C (value x 10)"
     MAX-ACCESS  read-write
     STATUS      current
-    DESCRIPTION "Allowed difference between RMU temp1 and the humidity sensor temperature ((제안) 3 C)."
+    DESCRIPTION "Allowed difference between RMU temp1 and temp2 ((제안) 3 C)."
     ::= { sfThresholds 13 }
 
 sfSoilLow OBJECT-TYPE

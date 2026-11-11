@@ -1,0 +1,625 @@
+PELKOREA-RMU-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32, enterprises
+        FROM SNMPv2-SMI;
+
+pelkorea MODULE-IDENTITY
+    LAST-UPDATED "202610310000Z"
+    ORGANIZATION "PELKOREA"
+    CONTACT-INFO
+        "R&D Team
+        Phone: +82-2-6112-3730
+        Email: info@pelkorea.com"
+    DESCRIPTION
+        "MIB for PELKOREA RMU Device (SNMPv2c Compatible).
+        Not every object is available on every installation. Objects of devices that
+        are not installed or not enabled for the site respond with noSuchObject."
+    REVISION "202610310000Z"
+    DESCRIPTION
+        "Added availability notes (objects may be absent depending on the site
+        configuration)."
+    REVISION "202610280000Z"
+    DESCRIPTION
+        "Added ctrStatus2 (VTES 2). Alarm codes changed: 81 = VTES2 and
+        CCTV1-CCTV5 moved from 81-85 to 82-86."
+    REVISION "202610220000Z"
+    DESCRIPTION
+        "Added cctvTable index (cctvIndex), vtes group, upsShutdown and alarm
+        code table.
+        Corrected IMPORTS, value ranges and value descriptions."
+    REVISION "202501080000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { enterprises 61123730 }
+
+-- Root Object Identifiers
+rmu      OBJECT IDENTIFIER ::= { pelkorea 1 }
+base     OBJECT IDENTIFIER ::= { rmu 1 }
+setup    OBJECT IDENTIFIER ::= { rmu 2 }
+ups      OBJECT IDENTIFIER ::= { rmu 3 }
+trap     OBJECT IDENTIFIER ::= { rmu 4 }
+external  OBJECT IDENTIFIER ::= { rmu 5 }
+cctv      OBJECT IDENTIFIER ::= { external 1 }
+vtes      OBJECT IDENTIFIER ::= { external 2 }
+
+-- Base Group
+acv1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..2700)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "AC1 Voltage (0-2700). display value = acv1 / 10"
+    ::= { base 1 }
+
+acv2 OBJECT-TYPE
+    SYNTAX      Integer32 (0..2700)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "AC2 Voltage (0-2700). display value = acv2 / 10"
+    ::= { base 2 }
+
+dcv1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..800)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "DCV1 Voltage (0-800). display value = dcv1 / 10"
+    ::= { base 3 }
+
+dcv2 OBJECT-TYPE
+    SYNTAX      Integer32 (0..800)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "DCV2 Voltage (0-800). display value = dcv2 / 10"
+    ::= { base 4 }
+
+ach1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..700)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "AC1 Frequency (0-700). display value = ach1 / 10"
+    ::= { base 5 }
+
+ach2 OBJECT-TYPE
+    SYNTAX      Integer32 (0..700)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "AC2 Frequency (0-700). display value = ach2 / 10"
+    ::= { base 6 }
+
+acdci1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..800)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "ACDCI1 AC Current (0-800). display value = acdci1 / 10"
+    ::= { base 7 }
+
+acdci2 OBJECT-TYPE
+    SYNTAX      Integer32 (0..800)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "ACDCI2 DC Current (0-800). display value = acdci2 / 10"
+    ::= { base 8 }
+
+temp1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..2000)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TEMP1 temperature (0-2000). display value = (temp1 - 500) / 10"
+    ::= { base 9 }
+
+temp2 OBJECT-TYPE
+    SYNTAX      Integer32 (0..2000)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TEMP2 temperature (0-2000). display value = (temp2 - 500) / 10"
+    ::= { base 10 }
+
+temp3 OBJECT-TYPE
+    SYNTAX      Integer32 (0..2000)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TEMP3 temperature (0-2000). display value = (temp3 - 500) / 10"
+    ::= { base 11 }
+
+temp4 OBJECT-TYPE
+    SYNTAX      Integer32 (0..2000)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TEMP4 temperature (0-2000). display value = (temp4 - 500) / 10"
+    ::= { base 12 }
+
+humidity1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..1000)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "HUMIDITY1 Humidity (0-1000). display value = humidity1 / 10"
+    ::= { base 13 }
+
+humidity2 OBJECT-TYPE
+    SYNTAX      Integer32 (0..1000)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "HUMIDITY2 Humidity (0-1000). display value = humidity2 / 10"
+    ::= { base 14 }
+
+pm10 OBJECT-TYPE
+    SYNTAX Integer32 (0..1000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Particulate Matter 10 (0-1000)."
+    ::= { base 15 }
+
+pm25 OBJECT-TYPE
+    SYNTAX Integer32 (0..1000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Particulate Matter 2.5 (0-1000)."
+    ::= { base 16 }
+
+pm1 OBJECT-TYPE
+    SYNTAX Integer32 (0..1000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Particulate Matter 1.0 (0-1000)."
+    ::= { base 17 }
+
+co2 OBJECT-TYPE
+    SYNTAX Integer32 (0..5000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "CO2 ppm (0-5000)."
+    ::= { base 18 }
+
+voc OBJECT-TYPE
+    SYNTAX Integer32 (0..3)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Volatile Organic Compounds Level (0-3)."
+    ::= { base 19 }
+
+fire OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Fire Detection Sensor (0 = fire detected, 1 = normal). Default 1."
+    ::= { base 20 }
+
+doorFront OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Front Door (0 = close, 1 = open). Default sensor type; the polarity may be reversed
+                depending on the sensor type (normally open / normally closed)."
+    ::= { base 21 }
+
+doorRear OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Rear Door (0 = close, 1 = open). Default sensor type; the polarity may be reversed
+                depending on the sensor type (normally open / normally closed)."
+    ::= { base 22 }
+
+flood OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Flood Detection (0 = flood, 1 = normal). Default sensor type; the polarity may be reversed
+                depending on the sensor type (normally open / normally closed)."
+    ::= { base 23 }
+
+fan OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Fan Status (0 = stop, 1 = start). Default sensor type; the polarity may be reversed
+                depending on the sensor type (normally open / normally closed)."
+    ::= { base 24 }
+
+rectifier OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Rectifier Status (0 = fail, 1 = normal). Default sensor type; the polarity may be reversed
+                depending on the sensor type (normally open / normally closed)."
+    ::= { base 25 }
+
+ext1 OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "External 1 Status (0 = event, 1 = normal). Default 1."
+    ::= { base 26 }
+
+ext2 OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "External 2 Status (0 = event, 1 = normal). Default 1."
+    ::= { base 27 }
+
+shock OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Shock Detection (0 = normal, 1 = shock). Default sensor type; the polarity may be reversed
+                depending on the sensor type (normally open / normally closed)."
+    ::= { base 28 }
+
+alarm OBJECT-TYPE
+    SYNTAX Integer32 (0..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Alarm code (0-255).
+                Codes 1-28 correspond to the sub-identifier of the base object
+                that raised the alarm (e.g. 1 = acv1, 9 = temp1, 21 = doorFront).
+                Other codes: 48 = CTR_FIRE, 50 = CTR_XK2, 51 = CTR_XK3,
+                60 = UPS utility fail, 61 = UPS battery low,
+                62 = UPS bypass/buck, 63 = UPS fault, 64 = UPS type,
+                65 = UPS test, 66 = UPS shutdown, 80 = VTES,
+                81 = VTES2, 82-86 = CCTV1-CCTV5,
+                98 = UPS communication failure.
+                Adding 100 to a code (101-198) means the alarm is released.
+                The codes actually sent as traps depend on the site configuration."
+    ::= { base 29 }
+
+-- Setup Group
+setAcv1Uvt OBJECT-TYPE
+    SYNTAX      Integer32 (1760..2150)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "AC1 Voltage Lower Threshold (1760-2150). display value = setAcv1Uvt / 10"
+    ::= { setup 1 }
+
+setAcv1Ovt OBJECT-TYPE
+    SYNTAX      Integer32 (2250..2640)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "AC1 Voltage Upper Threshold (2250-2640). display value = setAcv1Ovt / 10"
+    ::= { setup 2 }
+
+setAcv2Uvt OBJECT-TYPE
+    SYNTAX Integer32 (1760..2150)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "AC2 Voltage Under Threshold (1760-2150). display value = setAcv2Uvt / 10"
+    ::= { setup 3 }
+
+setAcv2Ovt OBJECT-TYPE
+    SYNTAX Integer32 (2250..2640)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "AC2 Voltage Over Threshold (2250-2640). display value = setAcv2Ovt / 10"
+    ::= { setup 4 }
+
+setDcv1Uvt OBJECT-TYPE
+    SYNTAX Integer32 (0..700)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "DC1 Voltage Under Threshold (0-700). display value = setDcv1Uvt / 10"
+    ::= { setup 5 }
+
+setDcv1Ovt OBJECT-TYPE
+    SYNTAX Integer32 (0..700)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "DC1 Voltage Over Threshold (0-700). display value = setDcv1Ovt / 10"
+    ::= { setup 6 }
+
+setDcv2Uvt OBJECT-TYPE
+    SYNTAX Integer32 (0..700)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "DC2 Voltage Under Threshold (0-700). display value = setDcv2Uvt / 10"
+    ::= { setup 7 }
+
+setDcv2Ovt OBJECT-TYPE
+    SYNTAX Integer32 (0..700)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "DC2 Voltage Over Threshold (0-700). display value = setDcv2Ovt / 10"
+    ::= { setup 8 }
+
+setAcdcI1Oct OBJECT-TYPE
+    SYNTAX Integer32 (0..800)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Current 1 Over Threshold (0-800). display value = setAcdcI1Oct / 10"
+    ::= { setup 9 }
+
+setAcdcI2Oct OBJECT-TYPE
+    SYNTAX Integer32 (0..800)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Current 2 Over Threshold (0-800). display value = setAcdcI2Oct / 10"
+    ::= { setup 10 }
+
+setTempU OBJECT-TYPE
+    SYNTAX      Integer32 (0..600)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Temperature Lower Threshold (0-600). display value = (setTempU - 500) / 10"
+    ::= { setup 11 }
+
+setTempO OBJECT-TYPE
+    SYNTAX      Integer32 (700..2000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Temperature Upper Threshold (700-2000). display value = (setTempO - 500) / 10"
+    ::= { setup 12 }
+
+setHumiU OBJECT-TYPE
+    SYNTAX Integer32 (0..300)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable Humidity Under Threshold (0-300). display value = setHumiU / 10"
+    ::= { setup 13 }
+
+setHumiO OBJECT-TYPE
+    SYNTAX Integer32 (400..1000)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable Humidity Over Threshold (400-1000). display value = setHumiO / 10"
+    ::= { setup 14 }
+
+setPm10O OBJECT-TYPE
+    SYNTAX Integer32 (0..1000)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable PM10 Over Threshold (0-1000)."
+    ::= { setup 15 }
+
+setPm25O OBJECT-TYPE
+    SYNTAX Integer32 (0..1000)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable PM2.5 Over Threshold (0-1000)."
+    ::= { setup 16 }
+
+setPm1O OBJECT-TYPE
+    SYNTAX Integer32 (0..1000)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable PM1 Over Threshold (0-1000)."
+    ::= { setup 17 }
+
+setCo2O OBJECT-TYPE
+    SYNTAX Integer32 (0..5000)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable CO2 Over Threshold (0-5000)."
+    ::= { setup 18 }
+
+setVocO OBJECT-TYPE
+    SYNTAX Integer32 (0..3)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable VOC Over Threshold (0-3)."
+    ::= { setup 19 }
+
+setFire OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable Fire Control (0 or 1)."
+    ::= { setup 20 }
+
+setXk1 OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable Control 1 (0 or 1)."
+    ::= { setup 21 }
+
+setXk2 OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable Control 2 (0 or 1)."
+    ::= { setup 22 }
+
+setXk3 OBJECT-TYPE
+    SYNTAX Integer32 (0..1)
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Settable Control 3 (0 or 1)."
+    ::= { setup 23 }
+
+-- UPS Group
+upsIpv OBJECT-TYPE
+    SYNTAX      Integer32 (0..2640)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Input Voltage (0-2640). display value = upsIpv / 10"
+    ::= { ups 1 }
+
+upsIpfv OBJECT-TYPE
+    SYNTAX      Integer32 (0..2640)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Input Fault Voltage (0-2640). display value = upsIpfv / 10"
+    ::= { ups 2 }
+
+upsOpv OBJECT-TYPE
+    SYNTAX      Integer32 (0..2640)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Output Voltage (0-2640). display value = upsOpv / 10"
+    ::= { ups 3 }
+
+upsOpc OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Load ratio in percent (0-100)."
+    ::= { ups 4 }
+
+upsIpf OBJECT-TYPE
+    SYNTAX      Integer32 (450..650)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Input Frequency (450-650). display value = upsIpf / 10"
+    ::= { ups 5 }
+
+upsBv OBJECT-TYPE
+    SYNTAX      Integer32 (0..150)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Battery Voltage (0-150). display value = upsBv / 10"
+    ::= { ups 6 }
+
+upsTm OBJECT-TYPE
+    SYNTAX      Integer32 (0..500)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Temperature (0-500). display value = upsTm / 10"
+    ::= { ups 7 }
+
+upsAv OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Utility Fail (abnormal voltage electricity) (0 = normal, 1 = utility fail)."
+    ::= { ups 8 }
+
+upsBl OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Battery Low (0 = normal, 1 = battery low)."
+    ::= { ups 9 }
+
+upsBb OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Bypass/Boost or Buck Active (0 = normal, 1 = active)."
+    ::= { ups 10 }
+
+upsUf OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Failed (0 = normal, 1 = failed)."
+    ::= { ups 11 }
+
+upsUs OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Type (0 = on-line, 1 = standby)."
+    ::= { ups 12 }
+
+upsTs OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Test in Progress (0 = idle, 1 = test in progress)."
+    ::= { ups 13 }
+
+upsSt OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS Shutdown Active (0 = normal, 1 = shutdown active)."
+    ::= { ups 14 }
+
+upsBz OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "UPS communication failure (0 = normal, 1 = communication failure). Formerly Beeper On."
+    ::= { ups 15 }
+
+upsShutdown OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (3..6))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "UPS Shutdown Output off and Restore command.
+                Format is 's,r' (digits and a single comma only, no spaces,
+                no leading zeros) where s is the shutdown delay in minutes
+                (1-10) and r is the restore delay in minutes (1-240).
+                Example: '10,240'.
+                A value outside these ranges or in any other format is
+                rejected (wrongValue).
+                GET returns the last value received; the initial value is '0,0'."
+    ::= { ups 16 }
+
+-- Trap Group
+addTrap OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Adds a trap destination as an OctetString. Format: 'IP:Port' (e.g., '192.168.1.100:162')."
+    ::= { trap 1 }
+
+alarmTrap NOTIFICATION-TYPE
+    OBJECTS { alarm }
+    STATUS current
+    DESCRIPTION "Trap to notify an alarm status change. The alarm object carries the alarm code."
+    ::= { trap 2 }
+
+-- External Group
+cctvTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF CctvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Table representing the status of up to 5 IP cameras.
+                Available only when CCTV monitoring is enabled for the site;
+                otherwise the objects of this table respond with noSuchObject."
+    ::= { cctv 1 }
+
+cctvEntry OBJECT-TYPE
+    SYNTAX      CctvEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "A CCTV (IP camera) entry."
+    INDEX       { cctvIndex }
+    ::= { cctvTable 1 }
+
+CctvEntry ::= SEQUENCE {
+        cctvName           OCTET STRING,
+        cctvStatus         Integer32,
+        cctvIndex          Integer32
+    }
+
+cctvName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "CCTV Name"
+    ::= { cctvEntry 1 }
+
+cctvStatus OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Status of CCTV. Each value is 0 (active) or 1 (inactive)."
+    ::= { cctvEntry 2 }
+
+cctvIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..5)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Index of the CCTV (1-5)."
+    ::= { cctvEntry 3 }
+
+ctrStatus OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Status of Controller (VTES 1). Each value is 0 (active) or 1 (inactive).
+                Available only when VTES 1 is installed and enabled for the site;
+                otherwise noSuchObject."
+    ::= { vtes 1 }
+
+ctrStatus2 OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Status of Controller (VTES 2). Each value is 0 (active) or 1 (inactive).
+                Available only when VTES 2 is installed and enabled for the site;
+                otherwise noSuchObject."
+    ::= { vtes 2 }
+
+END
