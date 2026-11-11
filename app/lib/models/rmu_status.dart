@@ -64,6 +64,9 @@ class RmuStatus {
   double? get humidity => sensors['humidity'];
   double? get waterLevel => sensors['water_level'];
 
+  /// 수위 부족 여부. 기준은 수위 하한 기본값 20% (제안, 서버 thresholds의 water_level_low와 같게)
+  bool get waterLow => (waterLevel ?? 100) < 20;
+
   /// 항목 상태 (모르면 ok)
   String stateOf(String name) => states[name] ?? 'ok';
 
@@ -200,7 +203,7 @@ const alarmLevelNames = ['정상', '주의', '경보', '긴급 경보'];
 /// 이름 → 화면 표시
 const displayNames = {
   'temperature': '온도',
-  'temp2': '온도2 (RMU)',
+  'temp2': '토양 온도',
   'humidity': '습도',
   'water_level': '수위',
   'fire': '화재',

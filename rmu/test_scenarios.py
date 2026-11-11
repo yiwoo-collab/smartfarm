@@ -10,7 +10,7 @@ import random
 import unittest
 from datetime import datetime, timedelta
 
-from rmu_model import ControlError, RmuModel, in_night_window
+from rmu_model import OPTIONAL, ControlError, RmuModel, in_night_window
 
 NOON = datetime(2026, 10, 14, 12, 0, 0)
 
@@ -259,6 +259,23 @@ class ScenarioTest(unittest.TestCase):
         self.assertEqual(self.ctl("aircon_setpoint"), 22.0)  # 승인 후 실행
         with self.assertRaises(ControlError):
             self.m.decide_suggestion(pending[0]["id"], True)  # 두 번 승인 안 됨
+
+    def test_27b_live_mode_skips_mismatch(self):
+        # 실물 temp2는 토양 온도라 실사용 모드에서는 공기 온도와 비교하지 않는다
+        self.m.mode = "live"
+        self.m.simulate("sensor_mismatch", {})
+        self.run_ticks(60)
+        self.assertNotIn("mismatch", self.m.active)
+
+    def test_28b_door_without_sensor(self):
+        # F DOOR 단자에 감지기가 없으면 정보없음, 도어 경보와 코드 21 Trap을 무시한다
+        m = RmuModel(unavailable=set(OPTIONAL) | {"door_front"})
+        m.simulate("door_open", {})
+        m.handle_rmu_alarm(21)
+        m.tick(NOON)
+        self.assertEqual(m.item_state("door_front"), "nodata")
+        self.assertNotIn("door", m.active)
+        self.assertNotIn(21, m.rmu_alarms)
 
     def test_27_ai_sensor_checks(self):
         self.m.simulate("sensor_mismatch", {})

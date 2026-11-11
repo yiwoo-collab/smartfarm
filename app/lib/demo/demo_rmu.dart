@@ -90,7 +90,7 @@ const _sensors = [
 
 const _names = {
   'temperature': '온도',
-  'temp2': '온도2',
+  'temp2': '토양 온도',
   'humidity': '습도',
   'water_level': '수위',
   'fire': '화재',
@@ -739,7 +739,10 @@ class DemoRmu {
     };
 
     // --- 2) 센서 불일치: RMU 온도1 vs 온도2 ---
-    if (usable('temperature') &&
+    // temp2(TMP2)는 실물에서 토양 온도라 공기 온도와 다른 게 정상이다.
+    // 그래서 실사용 모드에서는 비교하지 않고, 데모 모드(시나리오 27)에서만 판단한다.
+    if (mode == 'demo' &&
+        usable('temperature') &&
         usable('temp2') &&
         (temp - values['temp2']!).abs() > th['sensor_mismatch']!) {
       _mismatchSince ??= ts;

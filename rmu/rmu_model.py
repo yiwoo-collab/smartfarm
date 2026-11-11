@@ -74,7 +74,7 @@ SENSORS = ["temperature", "temp2", "humidity", "water_level", "fire",
            "ac_voltage", *PARTS, *OPTIONAL]                  # 센서 오류를 흉내 낼 수 있는 항목
 
 NAMES = {
-    "temperature": "온도", "temp2": "온도2", "humidity": "습도",
+    "temperature": "온도", "temp2": "토양 온도", "humidity": "습도",
     "water_level": "수위", "fire": "화재", "ac_voltage": "AC 전압", "ac_frequency": "AC 주파수",
     "door_front": "전면 도어", "ups_battery_low": "UPS 배터리 낮음",
     "co2": "CO2", "soil_moisture": "토양수분", "nutrient_ec": "양분(EC)",
@@ -498,7 +498,9 @@ class RmuModel:
                    "pending": sum(1 for s in self.suggestions if s["status"] == "pending")}
 
         # --- 2) 센서 불일치: RMU 온도1 vs 온도2 ---
-        if self.usable("temperature") and self.usable("temp2") \
+        # temp2(TMP2)는 실물에서 토양 온도라 공기 온도와 다른 게 정상이다.
+        # 그래서 실사용 모드에서는 비교하지 않고, 데모 모드(시나리오 27)에서만 판단한다.
+        if self.mode == "demo" and self.usable("temperature") and self.usable("temp2") \
                 and abs(temp - self.values["temp2"]) > th["sensor_mismatch"]:
             self.mismatch_since = self.mismatch_since or ts
         else:
@@ -983,6 +985,8 @@ class RmuModel:
         with self.lock:
             if code <= 0:
                 return
+            if code % 100 == 21 and "door_front" in self.unavailable:
+                return  # 전면 도어 감지기를 달지 않음 (정보없음) → 코드 21은 무시
             if 100 < code < 200:
                 self.rmu_alarms.pop(code - 100, None)
             else:

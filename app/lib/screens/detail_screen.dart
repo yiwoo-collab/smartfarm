@@ -188,14 +188,6 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
                 _section(context, '기타'),
                 ValueTile(
-                  icon: Icons.thermostat,
-                  label: displayNames['temp2']!,
-                  value: fmt(s.sensors['temp2'], 1, '℃'),
-                  stale: stale,
-                  state: s.stateOf('temp2'),
-                  onTap: () => _history('temp2'),
-                ),
-                ValueTile(
                   icon: Icons.door_front_door,
                   label: '전면 도어 (RMU)',
                   value: s.doorOpen == null ? '-' : (s.doorOpen! ? '열림' : '닫힘'),

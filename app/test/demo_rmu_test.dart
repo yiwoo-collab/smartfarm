@@ -236,6 +236,13 @@ void main() {
     );
   });
 
+  test('시나리오 27: 실사용 모드는 온도2(토양 온도)와 비교하지 않음', () {
+    m.mode = 'live';
+    m.simulate('sensor_mismatch', {});
+    ticks(60);
+    expect(m.active.containsKey('mismatch'), isFalse);
+  });
+
   test('시나리오 27: 센서 불일치·누수·값 고정 (AI 판단)', () {
     m.simulate('sensor_mismatch', {});
     runUntil(() => m.active.containsKey('mismatch'), '센서 불일치', 60);

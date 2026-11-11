@@ -2,18 +2,19 @@
 # 적용: sudo cp smartfarm-rmu.service /etc/systemd/system/
 #       sudo systemctl daemon-reload && sudo systemctl enable --now smartfarm-rmu
 # 로그: journalctl -u smartfarm-rmu -f
+# 학교 라즈베리파이 기준: 사용자 smartfarmpi, 코드 ~/smartfarm, RMU 192.168.0.50 (공유기 DHCP 예약)
 [Unit]
 Description=Smartfarm gateway v3.0 (RMU SNMP polling/traps, Pi sensors, relays, REST API)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=pi
-WorkingDirectory=/opt/smartfarm/rmu
-# --rmu-host: RMU 실물 주소로 바꾸세요 (선택: --trap-host <NMS 주소> 로 우리 farmAlarm Trap도 전송)
-ExecStart=/opt/smartfarm/venv/bin/python server.py --hardware --rmu-host 192.168.0.10
+User=smartfarmpi
+WorkingDirectory=/home/smartfarmpi/smartfarm/rmu
+# -u: 로그를 바로 출력. (선택: --trap-host <NMS 주소> 로 우리 farmAlarm Trap도 전송)
+ExecStart=/usr/bin/python3 -u server.py --hardware --rmu-host 192.168.0.50
 Restart=always
-RestartSec=3
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

@@ -329,6 +329,15 @@ class FarmStatusView extends StatelessWidget {
         state: s.stateOf('temperature'),
         onTap: () => _openHistory(context, 'temperature'),
       ),
+      // 토양 온도: RMU TMP2 단자 (temp2)
+      ValueTile(
+        icon: Icons.grass,
+        label: displayNames['temp2']!,
+        value: fmt(s.sensors['temp2'], 1, '℃'),
+        stale: stale,
+        state: s.stateOf('temp2'),
+        onTap: () => _openHistory(context, 'temp2'),
+      ),
       ValueTile(
         icon: Icons.water_drop,
         label: '습도',
@@ -340,7 +349,9 @@ class FarmStatusView extends StatelessWidget {
       ValueTile(
         icon: Icons.waves,
         label: '수위',
-        value: fmt(s.waterLevel, 0, '%'),
+        // 플로트 스위치라 0% / 100%만 나오므로 정상/부족으로 보여준다
+        value: s.waterLevel == null ? '-' : (s.waterLow ? '부족' : '정상'),
+        valueColor: s.waterLevel != null && s.waterLow ? Colors.orange : null,
         stale: stale,
         state: s.stateOf('water_level'),
         onTap: () => _openHistory(context, 'water_level'),

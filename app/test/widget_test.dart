@@ -238,8 +238,9 @@ void main() {
       farms: [farmA],
       statusJson: sampleStatusJson(humidity: null, states: {'humidity': 'fault'}),
     );
-    expect(find.text('센서 오류'), findsOneWidget);
     expect(find.text('30.3 ℃'), findsOneWidget);
+    await tester.dragUntilVisible(find.text('센서 오류'), homeList, const Offset(0, -200));
+    expect(find.text('센서 오류'), findsOneWidget);
   });
 
   testWidgets('시나리오 23: 홈은 로그인 없이, 제어는 로그인 요구', (tester) async {

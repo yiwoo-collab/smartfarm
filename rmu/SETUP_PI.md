@@ -77,11 +77,18 @@ PC 브라우저에서 `http://<라즈베리파이 IP>:8080/api/status`가 보이
 
 ## 6. 자동 실행
 
+`smartfarm-rmu.service`는 학교 라즈베리파이 기준(사용자 `smartfarmpi`, 코드 `~/smartfarm`, RMU `192.168.0.50`, 시스템 `python3`)으로 맞춰 두었습니다. 다르면 `User`, `WorkingDirectory`, `ExecStart`를 고치세요.
+
 ```bash
-sudo cp smartfarm-rmu.service /etc/systemd/system/      # --rmu-host를 RMU 주소로 수정
+pkill -f "[s]erver.py"                                   # nohup으로 켜 둔 서버가 있으면 먼저 끔
+cd ~/smartfarm/rmu
+sudo cp smartfarm-rmu.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now smartfarm-rmu
-journalctl -u smartfarm-rmu -f                           # 로그
+systemctl status smartfarm-rmu                           # active (running) 확인
+journalctl -u smartfarm-rmu -f                           # 로그 (Ctrl+C로 나가기)
 ```
+
+코드를 바꾼 뒤에는 `sudo systemctl restart smartfarm-rmu`로 다시 시작합니다.
 
 ## 7. (선택) 우리 확장 MIB를 SNMP로 제공
 

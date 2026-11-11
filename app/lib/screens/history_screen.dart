@@ -38,7 +38,7 @@ const historySensors = [
     ('ac_voltage_high', '상한'),
     ('ac_voltage_low', '하한'),
   ]),
-  HistorySensor('temp2', '온도2 (RMU temp2)', '℃', 1),
+  HistorySensor('temp2', '토양 온도 (RMU temp2)', '℃', 1),
   HistorySensor('greenhouse_power', '온실 전체 전력', 'W', 0),
   HistorySensor('pi_temp', '라즈베리파이 온도', '℃', 1, [('pi_temp_high', '상한')]),
   HistorySensor('main_fan_temp', '메인 환풍기 온도', '℃', 1, [('part_temp_high', '상한')]),

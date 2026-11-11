@@ -312,6 +312,10 @@ def main():
     oids = oidlib.load()
     mode = args.mode or ("live" if (args.hardware or args.rmu_host) else "demo")
     unavailable = oidlib.unavailable(oids)
+    if args.rmu_host:
+        # 실물 RMU의 F DOOR 단자에 감지기를 달지 않았다 (팀 결정 2026-11-12).
+        # 빈 단자는 '열림'(1)으로 읽혀 경보가 계속 뜨므로 정보없음으로 처리한다.
+        unavailable.add("door_front")
     rmu = RmuModel(hardware=hardware, storage=storage, unavailable=unavailable, mode=mode)
     check_oid_names(rmu)
 
