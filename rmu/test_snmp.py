@@ -102,6 +102,25 @@ class RmuLinkTest(unittest.TestCase):
         self.assertIsNone(st["sensors"]["humidity"])
         self.assertEqual(st["states"]["temperature"], "ok")
 
+    def test_unplugged_temp_is_fault(self):
+        # 온도 센서를 빼면 RMU가 raw 200(−30℃)을 준다 → 센서 오류, 저온 경보 없음 (팀 결정 2026-11-17)
+        self.rmu.raw["temp1"] = 200
+        self.rmu.raw["temp2"] = 200
+        self.assertTrue(self.poller.poll_once())
+        for _ in range(5):
+            self.model.tick()
+        st = self.model.status()
+        self.assertEqual(st["states"]["temperature"], "fault")
+        self.assertEqual(st["states"]["temp2"], "fault")
+        self.assertIn("temperature", st["sensor_errors"])
+        self.assertNotIn("temp", self.model.active)  # −30℃ 저온 경보가 뜨면 안 됨
+        self.assertEqual(st["states"]["humidity"], "ok")  # 나머지는 정상
+        # 센서를 다시 꽂으면 정상으로 돌아온다
+        self.rmu.raw["temp1"] = 750  # 25.0℃
+        self.poller.poll_once()
+        self.model.tick()
+        self.assertEqual(self.model.status()["states"]["temperature"], "ok")
+
     def test_poll_converts_values(self):
         self.rmu.raw["temp1"] = 800  # 30.0℃
         self.assertTrue(self.poller.poll_once())

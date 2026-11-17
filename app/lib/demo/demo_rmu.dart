@@ -138,7 +138,8 @@ const _lowEmergencyStop = [
   'lights',
   'pump',
 ];
-const _fireStop = ['heater', 'lights', 'pump'];
+// 화재: 열원·전기 장비 정지 + 환기 정지 (팀 결정 2026-11-17: 바람이 불을 키우지 않게 환풍기·쿨링팬도 끈다)
+const _fireStop = ['heater', 'lights', 'pump', 'main_fan', 'backup_fan', 'cooling_fan'];
 
 const _defaultBase = <String, num>{
   'main_fan': 1,
@@ -940,8 +941,11 @@ class DemoRmu {
     }
 
     // 누수 의심 (AI, 202 주의): 펌프가 꺼져 있는데 수위가 빨리 줄어든다
+    // 실물 수위는 플로트 스위치라 0/100%만 나와 하락 속도를 잴 수 없다 (팀 결정 2026-11-17)
+    // → 데모 모드(연속 값 시뮬레이션)에서만 판단한다.
     final ws = _slope(_waterSamples);
-    if (usable('water_level') &&
+    if (mode == 'demo' &&
+        usable('water_level') &&
         ws != null &&
         !running('pump') &&
         hyst('leak', ws < _leakRate, ws < _leakRate / 2)) {
@@ -957,7 +961,7 @@ class DemoRmu {
 
     // 화재 (203, 긴급)
     if (usable('fire') && v['fire']! >= 1) {
-      add('fire', 3, 203, '긴급: 화재 감지', ['열원과 전기 장비(히터·전구·펌프)를 정지했습니다', '오감지일 수 있으니 현장을 확인하세요']);
+      add('fire', 3, 203, '긴급: 화재 감지', ['열원과 전기 장비(히터·전구·펌프)와 환기(환풍기·쿨링팬)를 정지했습니다','오감지일 수 있으니 현장을 확인하세요']);
     }
 
     // 감지기가 연결된 경우에만 (기본은 정보없음이라 판정 제외)

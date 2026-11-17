@@ -53,6 +53,14 @@ def to_value(raw, obj):
     return round(raw * obj.get("scale", 1) + obj.get("offset", 0), 4)
 
 
+def is_fault_raw(raw, obj):
+    """감지기가 빠졌을 때 RMU가 주는 원시값인가 → 센서 오류로 처리 (정보없음과 구분)
+    oids.json의 fault_raw_max: 원시값이 이 값 이하이면 센서 오류.
+    예: temp1/temp2는 센서를 빼면 raw 200(−30℃)이 온다 (실물 확인 2026-11-11)."""
+    limit = obj.get("fault_raw_max")
+    return limit is not None and isinstance(raw, (int, float)) and raw <= limit
+
+
 def to_raw(value, obj):
     """실제 값 → SNMP 원시값 (정수)"""
     if isinstance(value, bool):

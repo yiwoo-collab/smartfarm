@@ -121,12 +121,17 @@ void main() {
 
   test('시나리오 10: 화재 → 긴급, 열원 정지', () {
     m.base['heater'] = 1;
+    m.base['backup_fan'] = 1;
+    m.base['cooling_fan'] = 1;
     m.simulate('fire', {});
     tick();
     expect(m.alarmLevel(), 3);
     expect(m.active['fire']!['code'], 203);
     expect(m.control['heater'], 0);
     expect(m.control['lights'], 0);
+    for (final fan in ['main_fan', 'backup_fan', 'cooling_fan']) {
+      expect(m.control[fan], 0, reason: fan); // 환기 정지 (팀 결정 2026-11-17)
+    }
     final first = m.events.firstWhere((e) => e['key'] == 'fire');
     expect((first['actions'] as List).join(), contains('오감지'));
     m.simulate('fire_clear', {});
@@ -241,6 +246,13 @@ void main() {
     m.simulate('sensor_mismatch', {});
     ticks(60);
     expect(m.active.containsKey('mismatch'), isFalse);
+  });
+
+  test('시나리오 27: 실사용 모드는 수위 하락 속도로 누수를 판단하지 않음', () {
+    m.mode = 'live';
+    m.simulate('water_leak', {});
+    ticks(90);
+    expect(m.active.containsKey('leak'), isFalse);
   });
 
   test('시나리오 27: 센서 불일치·누수·값 고정 (AI 판단)', () {

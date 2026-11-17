@@ -10,12 +10,12 @@ IMPORTS
         FROM SNMPv2-TC;
 
 smartfarmExt MODULE-IDENTITY
-    LAST-UPDATED "202611110000Z"
+    LAST-UPDATED "202611170000Z"
     ORGANIZATION "Smartfarm Capstone Team"
     CONTACT-INFO "Smartfarm Capstone Team"
     DESCRIPTION  "Smartfarm items provided by the Raspberry Pi gateway.
                   Scalars are accessed with the .0 instance suffix."
-    REVISION     "202611110000Z"
+    REVISION     "202611170000Z"
     DESCRIPTION  "Generated from oids.json (v3.0)."
     ::= { enterprises 61123730 1 6 }
 
@@ -201,7 +201,7 @@ sfSensorMismatch OBJECT-TYPE
     UNITS       "C (value x 10)"
     MAX-ACCESS  read-write
     STATUS      current
-    DESCRIPTION "Allowed difference between RMU temp1 and temp2 ((제안) 3 C)."
+    DESCRIPTION "Allowed difference between RMU temp1 and temp2 ((제안) 3 C, demo mode only because temp2 is soil temperature)."
     ::= { sfThresholds 13 }
 
 sfSoilLow OBJECT-TYPE

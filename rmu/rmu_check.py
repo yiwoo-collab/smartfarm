@@ -40,7 +40,8 @@ def main():
             print(f"  {obj['mib']:<12} {oid:<34} 실패: {e}")
             continue
         value = oidlib.to_value(raw, obj)
-        print(f"  {obj['mib']:<12} {oid:<34} 원시값 {raw!s:<8} → {obj['name']} = {value} {obj.get('unit', '')}")
+        note = "  (센서 미연결 → 앱에서 센서 오류)" if oidlib.is_fault_raw(raw, obj) else ""
+        print(f"  {obj['mib']:<12} {oid:<34} 원시값 {raw!s:<8} → {obj['name']} = {value} {obj.get('unit', '')}{note}")
 
     if args.trap:
         model = RmuModel(mode="live")

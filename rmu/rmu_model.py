@@ -92,7 +92,8 @@ BASE_WATTS = 30
 # 긴급 경보 시 정지 (문제를 해결하는 장비는 유지, CLAUDE.md 4장)
 HIGH_EMERGENCY_STOP = ["heater", "lights", "pump"]
 LOW_EMERGENCY_STOP = ["aircon", "cooling_fan", "main_fan", "backup_fan", "lights", "pump"]
-FIRE_STOP = ["heater", "lights", "pump"]  # 화재: 열원·전기 장비 정지 (환기는 팀 결정 전이라 그대로)
+# 화재: 열원·전기 장비 정지 + 환기 정지 (팀 결정 2026-11-17: 바람이 불을 키우지 않게 환풍기·쿨링팬도 끈다)
+FIRE_STOP = ["heater", "lights", "pump", "main_fan", "backup_fan", "cooling_fan"]
 
 DEFAULT_BASE = {
     "main_fan": 1, "backup_fan": 0, "cooling_fan": 0,
@@ -656,8 +657,10 @@ class RmuModel:
                 ["물이 부족해 펌프 사용을 제한합니다. 물탱크를 채우세요"])
 
         # 누수 의심 (AI, 202 주의): 펌프가 꺼져 있는데 수위가 빨리 줄어든다
+        # 실물 수위는 플로트 스위치라 0/100%만 나와 하락 속도를 잴 수 없다 (팀 결정 2026-11-17)
+        # → 데모 모드(연속 값 시뮬레이션)에서만 판단한다.
         ws = self.water_slope()
-        if self.usable("water_level") and ws is not None and not self.running("pump") \
+        if self.mode == "demo" and self.usable("water_level") and ws is not None and not self.running("pump") \
                 and hyst("leak", ws < LEAK_RATE, ws < LEAK_RATE / 2):
             add("leak", 1, 202, f"누수 의심: 수위가 분당 {abs(ws) * 60:.1f}%씩 줄고 있습니다",
                 [f"판단 이유: 최근 {LEAK_WINDOW_SECONDS}초 수위 하락 속도 {ws * 60:.1f}%/분 (펌프 꺼짐)",
@@ -666,7 +669,7 @@ class RmuModel:
         # 화재 (203, 긴급)
         if self.usable("fire") and v["fire"] >= 1:
             add("fire", 3, 203, "긴급: 화재 감지",
-                ["열원과 전기 장비(히터·전구·펌프)를 정지했습니다",
+                ["열원과 전기 장비(히터·전구·펌프)와 환기(환풍기·쿨링팬)를 정지했습니다",
                  "오감지일 수 있으니 현장을 확인하세요"])
 
         # 감지기가 연결된 경우에만 (기본은 정보없음이라 판정 제외)

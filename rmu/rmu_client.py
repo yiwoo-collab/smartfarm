@@ -50,7 +50,11 @@ class RmuPoller:
             return False
         values, absent = {}, set()
         for obj in self.items:
-            value = oidlib.to_value(raw.get(obj["oid"].strip(".") + ".0"), obj)
+            r = raw.get(obj["oid"].strip(".") + ".0")
+            if oidlib.is_fault_raw(r, obj):
+                values[obj["name"]] = None  # 감지기 빠짐(예: 온도 raw 200 = −30℃) → 센서 오류
+                continue
+            value = oidlib.to_value(r, obj)
             if value is None:
                 absent.add(obj["name"])  # noSuchObject: 이 현장에 설치되지 않은 항목 → 정보없음
             else:

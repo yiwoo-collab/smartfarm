@@ -135,12 +135,15 @@ class ScenarioTest(unittest.TestCase):
 
     def test_10_fire(self):
         self.m.base["heater"] = 1
+        self.m.base["backup_fan"] = self.m.base["cooling_fan"] = 1  # 환기 장비가 켜져 있을 때
         self.m.simulate("fire", {})
         self.tick()
         self.assertEqual(self.level(), 3)
         self.assertEqual(self.m.active["fire"]["code"], 203)
         self.assertEqual(self.ctl("heater"), 0)  # 열원 정지
         self.assertEqual(self.ctl("lights"), 0)
+        for fan in ("main_fan", "backup_fan", "cooling_fan"):
+            self.assertEqual(self.ctl(fan), 0, fan)  # 환기 정지 (팀 결정 2026-11-17)
         first = [e for e in self.m.events if e["key"] == "fire"][0]
         self.assertTrue(any("오감지" in a for a in first["actions"]))
         self.m.simulate("fire_clear", {})
@@ -266,6 +269,13 @@ class ScenarioTest(unittest.TestCase):
         self.m.simulate("sensor_mismatch", {})
         self.run_ticks(60)
         self.assertNotIn("mismatch", self.m.active)
+
+    def test_27c_live_mode_skips_leak(self):
+        # 실물 수위는 플로트(0/100%)라 하락 속도로 누수를 판단하지 않는다 (데모 모드만)
+        self.m.mode = "live"
+        self.m.simulate("water_leak", {})
+        self.run_ticks(90)
+        self.assertNotIn("leak", self.m.active)
 
     def test_28b_door_without_sensor(self):
         # F DOOR 단자에 감지기가 없으면 정보없음, 도어 경보와 코드 21 Trap을 무시한다
