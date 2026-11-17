@@ -90,6 +90,25 @@ journalctl -u smartfarm-rmu -f                           # 로그 (Ctrl+C로 나
 
 코드를 바꾼 뒤에는 `sudo systemctl restart smartfarm-rmu`로 다시 시작합니다.
 
+### 코드 업데이트 (노트북에서 한 줄)
+
+GitHub에 올린 최신 코드로 라즈베리파이를 업데이트하고 서버를 다시 시작합니다. 자동 실행 서비스가 아직 없으면 위 6번 설치까지 같이 합니다.
+
+```bash
+ssh -t smartfarmpi@192.168.0.10 "curl -fsSL https://raw.githubusercontent.com/yiwoo-collab/smartfarm/main/rmu/update_pi.sh -o /tmp/update_pi.sh && bash /tmp/update_pi.sh"
+```
+
+- 라즈베리파이 비밀번호와 sudo 비밀번호를 물으면 입력합니다.
+- `rmu/data`(기록 DB)와 `rmu/admin.json`은 그대로 남고, 덮어쓰기 전 코드는 `~/smartfarm_backup_날짜.tar.gz`로 백업됩니다.
+- 마지막에 "업데이트 완료: <커밋>"이 나오면 성공입니다. 지금 버전은 `cat ~/smartfarm/VERSION`.
+
+**비밀번호 없이 접속하기 (노트북에서 처음 한 번)**: 노트북 PowerShell에서 키를 만들고 라즈베리파이에 등록합니다.
+
+```bash
+ssh-keygen -t ed25519 -N '""' -f "$env:USERPROFILE\.ssh\id_ed25519"
+type "$env:USERPROFILE\.ssh\id_ed25519.pub" | ssh smartfarmpi@192.168.0.10 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
 ## 7. (선택) 우리 확장 MIB를 SNMP로 제공
 
 NMS에서 라즈베리파이 값(습도·수위·화재·등급 등)도 SNMP로 보려면 snmpd를 켭니다. RMU 실물 MIB는 RMU가 직접 응답합니다.
