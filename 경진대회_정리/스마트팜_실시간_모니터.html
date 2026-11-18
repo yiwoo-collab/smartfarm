@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>스마트팜 실시간 모니터</title>
+<style>
+  :root { --bg:#0f1720; --card:#1a2430; --line:#2a3644; --text:#e8eef5; --muted:#8b9aab;
+          --ok:#2ecc71; --warn:#f1c40f; --alarm:#e67e22; --crit:#e74c3c; --nodata:#7f8c8d; --accent:#3fa7ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
+  header { display:flex; align-items:center; gap:16px; padding:14px 24px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:24px; margin:0; }
+  .badge { padding:4px 12px; border-radius:999px; font-size:14px; font-weight:bold; }
+  .grow { flex:1; }
+  #clock { font-size:22px; font-variant-numeric:tabular-nums; }
+  #conn { font-size:15px; }
+  #banner { margin:16px 24px 0; padding:16px 20px; border-radius:12px; font-size:24px; font-weight:bold; }
+  main { padding:16px 24px 24px; display:grid; grid-template-columns: 2fr 1fr; gap:16px; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+  .tile { background:var(--card); border:2px solid var(--line); border-radius:14px; padding:16px 18px; transition:border-color .3s, box-shadow .3s; }
+  .tile .lbl { color:var(--muted); font-size:16px; display:flex; justify-content:space-between; }
+  .tile .val { font-size:44px; font-weight:bold; margin-top:6px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .tile .sub { color:var(--muted); font-size:14px; margin-top:4px; min-height:18px; }
+  .tile.flash { box-shadow:0 0 0 3px var(--accent); }
+  .st { font-size:13px; padding:2px 8px; border-radius:6px; font-weight:bold; }
+  canvas { width:100%; height:42px; display:block; margin-top:6px; }
+  section.panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:16px; }
+  section.panel h2 { font-size:17px; margin:0 0 10px; color:var(--muted); font-weight:normal; }
+  .dev { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:16px; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:var(--nodata); }
+  .dot.on { background:var(--ok); }
+  #ai { font-size:16px; line-height:1.5; }
+  #events { list-style:none; margin:0; padding:0; font-size:15px; max-height:420px; overflow:auto; }
+  #events li { padding:8px 0; border-bottom:1px solid var(--line); }
+  #events .t { color:var(--muted); font-size:13px; }
+  #events .a { color:var(--muted); font-size:13px; }
+  .cfg { color:var(--muted); font-size:13px; }
+  .cfg input { background:transparent; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:3px 6px; width:170px; }
+  @media (max-width:1000px) { main { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌱 스마트팜 실시간 모니터 <span style="font-size:15px;color:var(--muted)">v3.0</span></h1>
+  <span id="mode" class="badge" style="background:#2a3644">-</span>
+  <span id="conn">연결 중…</span>
+  <span class="grow"></span>
+  <span class="cfg">라즈베리파이 <input id="host" value="192.168.0.10:8080"></span>
+  <span id="clock">--:--:--</span>
+</header>
+
+<div id="banner">불러오는 중…</div>
+
+<main>
+  <div>
+    <div class="tiles" id="tiles"></div>
+  </div>
+  <div>
+    <section class="panel"><h2>🤖 AI 판단</h2><div id="ai">-</div></section>
+    <section class="panel"><h2>⚙️ 장비 상태</h2><div class="dev" id="devices"></div></section>
+    <section class="panel"><h2>🔔 최근 알림·조치 내역</h2><ul id="events"></ul></section>
+  </div>
+</main>
+
+<script>
+const LEVEL = {0:["정상","var(--ok)"],1:["주의","var(--warn)"],2:["경보","var(--alarm)"],3:["긴급 경보","var(--crit)"]};
+const STATE = {ok:null, nodata:["정보없음","var(--nodata)"], fault:["센서 오류","var(--crit)"], offline:["통신 두절","var(--nodata)"]};
+const DEV = {main_fan:"메인 환풍기",backup_fan:"예비 환풍기",cooling_fan:"쿨링팬",aircon:"에어컨",heater:"히터",pump:"펌프",cover:"덮개",lights:"전구"};
+
+// 표시할 칸: [키, 이름, 아이콘, 값 만들기, 상태 키, 그래프 여부]
+const TILES = [
+  ["temperature","온도","🌡️", s=>num(s.sensors.temperature,1,"℃"), "temperature", true],
+  ["temp2","토양 온도","🌱", s=>num(s.sensors.temp2,1,"℃"), "temp2", true],
+  ["humidity","습도","💧", s=>num(s.sensors.humidity,1,"%"), "humidity", true],
+  ["water","수위","🌊", s=> s.sensors.water_level==null ? "-" : (s.sensors.water_level < 20 ? "부족" : "정상"), "water_level", false],
+  ["fire","화재","🔥", s=> s.sensors.fire==null ? "-" : (s.sensors.fire ? "감지" : "없음"), "fire", false],
+  ["power","전원 공급","🔌", s=> s.power.power_ok ? "정상" : "이상", "ac_voltage", false],
+  ["pi","라즈베리파이 CPU","🖥️", s=>num(s.part_temps.pi_temp,1,"℃"), "pi_temp", true],
+  ["co2","CO2","🫧", s=>num(s.sensors.co2,0,"ppm"), "co2", false],
+];
+const hist = {}; const prev = {};
+let lastEvent = 0, events = [], failCount = 0;
+
+function num(v,d,u){ return v==null ? "-" : v.toFixed(d)+u; }
+function base(){ return "http://" + document.getElementById("host").value.trim(); }
+function esc(t){ return String(t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function buildTiles(){
+  document.getElementById("tiles").innerHTML = TILES.map(([k,l,i,,,g]) =>
+    `<div class="tile" id="t_${k}"><div class="lbl"><span>${i} ${l}</span><span class="st" id="s_${k}"></span></div>
+     <div class="val" id="v_${k}">-</div><div class="sub" id="u_${k}"></div>${g?`<canvas id="c_${k}" width="400" height="84"></canvas>`:""}</div>`).join("");
+}
+
+function spark(k, color){
+  const c = document.getElementById("c_"+k); if(!c) return;
+  const h = hist[k] || []; const x = c.getContext("2d"); x.clearRect(0,0,c.width,c.height);
+  const pts = h.filter(v=>v!=null); if(pts.length<2) return;
+  let mn = Math.min(...pts), mx = Math.max(...pts); if(mx-mn<1){ const m=(mx+mn)/2; mn=m-0.5; mx=m+0.5; }
+  x.strokeStyle = color; x.lineWidth = 3; x.beginPath();
+  h.forEach((v,i)=>{ if(v==null) return; const px=i/(119)*c.width, py=c.height-6-(v-mn)/(mx-mn)*(c.height-12); i&&h[i-1]!=null?x.lineTo(px,py):x.moveTo(px,py); });
+  x.stroke();
+}
+
+function render(s){
+  const offline = s.rmu && s.rmu.used && !s.rmu.connected;
+  // 모드 배지
+  const m = document.getElementById("mode");
+  m.textContent = s.mode==="demo" ? "데모 모드" : "실사용 모드 (실물 RMU)";
+  m.style.background = s.mode==="demo" ? "#8e44ad" : "#1f6f43";
+  // 경보 배너
+  const [ln, lc] = LEVEL[s.alarm_level] || LEVEL[0];
+  const b = document.getElementById("banner");
+  const conds = s.conditions||[];
+  const msgs = conds.map(c=>`${conds.length>1?(LEVEL[c.level]||LEVEL[0])[0]+": ":""}${c.message}${c.ai?" (AI 판단)":""}`);
+  b.innerHTML = offline ? `⚠️ RMU 통신 두절 — 마지막 수신 ${esc((s.rmu.last_seen||"").replace("T"," "))}`
+              : (s.alarm_level ? `🚨 ${ln} — ` + esc(msgs.join(" · ")) : "✅ 정상 — 모든 항목이 기준 범위 안에 있습니다");
+  b.style.background = offline ? "var(--nodata)" : lc; b.style.color = s.alarm_level===1 ? "#222" : "#fff";
+
+  // 센서 칸
+  for (const [k,, , f, sk, g] of TILES){
+    const v = f(s); const el = document.getElementById("v_"+k); const tile = document.getElementById("t_"+k);
+    const st = offline && ["temperature","temp2","humidity","water","fire","power"].includes(k) ? "offline" : (s.states[sk]||"ok");
+    el.textContent = v;
+    let color = "var(--text)";
+    if ((k==="water" && v==="부족") || (k==="power" && v==="이상")) color = "var(--alarm)";
+    if (k==="fire" && v==="감지") color = "var(--crit)";
+    if (st!=="ok") color = "var(--nodata)";
+    el.style.color = color;
+    const sb = document.getElementById("s_"+k); const sv = STATE[st];
+    sb.textContent = sv ? sv[0] : "정상"; sb.style.background = sv ? sv[1] : "var(--ok)"; sb.style.color = "#fff";
+    tile.style.borderColor = color==="var(--text)" ? "var(--line)" : color;
+    if (prev[k]!==undefined && prev[k]!==v){ tile.classList.add("flash"); setTimeout(()=>tile.classList.remove("flash"),900); }
+    prev[k]=v;
+    if (g){ const raw = {temperature:s.sensors.temperature,temp2:s.sensors.temp2,humidity:s.sensors.humidity,pi:s.part_temps.pi_temp}[k];
+      (hist[k] = hist[k]||[]).push(st==="ok"?raw:null); if(hist[k].length>120) hist[k].shift(); spark(k, "#3fa7ff"); }
+  }
+  document.getElementById("u_power").textContent = s.power.ac_voltage!=null ? `${s.power.ac_voltage.toFixed(1)} V · ${s.power.ac_frequency.toFixed(1)} Hz` : "";
+  document.getElementById("u_water").textContent = "플로트 스위치 (RMU FLOOD)";
+  document.getElementById("u_fire").textContent = "화재 감지기 (RMU FIRE)";
+  document.getElementById("u_temperature").textContent = "RMU TMP1";
+  document.getElementById("u_temp2").textContent = "RMU TMP2";
+  document.getElementById("u_humidity").textContent = "RMU HUMI";
+  document.getElementById("u_pi").textContent = "라즈베리파이 자체 온도";
+  document.getElementById("u_co2").textContent = "감지기 없음";
+
+  // AI
+  const ai = s.ai||{};
+  document.getElementById("ai").innerHTML = (ai.active?"<b>선가동 중</b><br>":"") + esc(ai.reason||"판단할 변화가 없습니다") +
+    (ai.pending?`<br>승인 대기 제안 ${ai.pending}건`:"");
+  // 장비
+  document.getElementById("devices").innerHTML = Object.entries(DEV).map(([k,l]) =>
+    `<div><span class="dot ${s.control[k]?"on":""}"></span>${l}${k==="aircon"&&s.control[k]?` (${s.control.aircon_setpoint}℃)`:""}</div>`).join("") +
+    `<div style="grid-column:1/-1;color:var(--muted);font-size:13px;margin-top:4px">제어 모드: ${s.control.control_mode?"자동":"수동"} · 사용 전력 ${s.power.greenhouse_power} W (시뮬레이션)</div>`;
+}
+
+async function loadEvents(){
+  // 처음에는 끝까지 넘겨 최신 번호를 찾고, 이후에는 새 이벤트만 받는다
+  for (let i=0;i<50;i++){
+    const r = await fetch(`${base()}/api/events?since=${lastEvent}`, {cache:"no-store"});
+    const j = await r.json(); const ev = j.events||[];
+    if (!ev.length) break;
+    events = events.concat(ev).slice(-30); lastEvent = ev[ev.length-1].id;
+    if (ev.length < 500) break;
+  }
+  document.getElementById("events").innerHTML = events.slice().reverse().slice(0,15).map(e => {
+    const col = e.type==="clear" ? "var(--ok)" : (LEVEL[e.level]||LEVEL[0])[1];
+    const tag = e.type==="clear" ? "복구" : (e.level ? LEVEL[e.level][0] : "정보");
+    return `<li><span class="st" style="background:${col};color:#fff">${tag}</span>${e.ai?' <span class="st" style="background:#8e44ad;color:#fff">AI 판단</span>':""}
+      ${esc(e.message)}<div class="t">${esc(e.time.replace("T"," "))}</div>${(e.actions||[]).length?`<div class="a">↳ ${esc(e.actions.join(" / "))}</div>`:""}</li>`;
+  }).join("") || "<li class='t'>기록 없음</li>";
+}
+
+async function tick(){
+  try {
+    const r = await fetch(`${base()}/api/status`, {cache:"no-store"});
+    const s = await r.json(); render(s); failCount = 0;
+    document.getElementById("conn").innerHTML = `<span style="color:var(--ok)">● 라즈베리파이 연결됨</span> <span style="color:var(--muted)">갱신 ${esc(s.time.slice(11))}</span>`;
+    await loadEvents();
+  } catch(e){
+    failCount++;
+    document.getElementById("conn").innerHTML = `<span style="color:var(--crit)">● 라즈베리파이에 연결할 수 없음 (${failCount})</span>`;
+    if (failCount===3){ const b=document.getElementById("banner"); b.textContent="⚠️ 라즈베리파이 응답 없음 — 노트북 랜선(NEXTU 공유기) 연결을 확인하세요"; b.style.background="var(--nodata)"; }
+  }
+}
+document.getElementById("host").addEventListener("change", ()=>{ lastEvent=0; events=[]; tick(); });
+setInterval(()=>{ document.getElementById("clock").textContent = new Date().toLocaleTimeString("ko-KR",{hour12:false}); }, 1000);
+buildTiles(); tick(); setInterval(tick, 2000);
+</script>
+</body>
+</html>
